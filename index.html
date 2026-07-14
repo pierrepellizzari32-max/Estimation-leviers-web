@@ -1,0 +1,327 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Estimation patrimoniale — Bilan gratuit</title><meta name="description" content="Découvrez votre potentiel d'optimisation patrimoniale en 3 minutes. Estimation gratuite, sans engagement."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{--creme:#FAF9F6;--creme-2:#F0EFEA;--texte:#1A1A1A;--texte-2:#4A4A48;--vert:#2C4C3B;--vert-c:#DDE0DB;--or:#8B7355;--bord:#E3E1DB;--success:#3E6B52}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--creme);color:var(--texte);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.hero{background:var(--vert);color:var(--creme);padding:52px 24px 60px}
+.hero-in{max-width:760px;margin:0 auto}
+.eyebrow{font-weight:500;font-size:11px;letter-spacing:3px;color:var(--or);margin-bottom:12px;text-transform:uppercase}
+.hero h1{font-family:'Playfair Display';font-weight:500;font-size:clamp(30px,6vw,46px);line-height:1.1;letter-spacing:-.5px}
+.hero p{margin-top:16px;color:rgba(250,249,246,.85);font-size:15px;max-width:520px;line-height:1.5}
+.prog{display:flex;padding:20px 24px;border-bottom:1px solid var(--bord)}
+.prog-in{max-width:760px;margin:0 auto;display:flex;gap:8px;width:100%}
+.ps{flex:1;text-align:center;opacity:.35}
+.ps.on{opacity:1}
+.ps-n{font-family:'Playfair Display';font-size:20px;color:var(--bord)}
+.ps.on .ps-n{color:var(--vert)}
+.ps-l{font-size:10px;letter-spacing:.5px;color:var(--texte-2);margin-top:2px}
+.ps.on .ps-l{color:var(--vert);font-weight:500}
+.sec{padding:32px 0 48px}
+.q{font-family:'Playfair Display';font-weight:500;font-size:26px;line-height:1.25}
+.h{color:var(--texte-2);font-size:14px;line-height:1.5;margin-top:8px}
+.list{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+.itm{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--creme-2);border:1px solid var(--bord);border-radius:4px;cursor:pointer;transition:all .15s}
+.itm:hover{background:#E7E5DE;border-color:var(--or)}
+.itm-ic{font-size:22px;flex-shrink:0}
+.itm-l{flex:1;font-weight:500;font-size:15px}
+.itm-s{font-size:12px;color:var(--texte-2);margin-top:2px;font-weight:400}
+.itm-a{color:var(--bord)}
+.f{margin-top:22px}
+.lb{font-size:12px;color:var(--texte-2);margin-bottom:6px;letter-spacing:.4px}
+.pr{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.p{padding:8px 14px;background:var(--creme-2);border:1px solid var(--bord);border-radius:999px;cursor:pointer;font-size:13px;user-select:none;transition:all .15s}
+.p.on{background:var(--vert);color:var(--creme);border-color:var(--vert);font-weight:500}
+.nr{display:flex;align-items:baseline;border-bottom:1px solid #C2BDB2;padding-bottom:6px}
+.nr input{flex:1;font-family:'Playfair Display';font-weight:500;font-size:30px;color:var(--texte);border:none;outline:none;background:transparent;padding:4px 0}
+.nr input::-webkit-outer-spin-button,.nr input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nr .u{font-size:13px;color:var(--texte-2);margin-left:8px}
+.cr{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.c{padding:6px 12px;background:var(--vert-c);border-radius:999px;cursor:pointer;font-size:12px;color:var(--vert);border:none;font-family:inherit}
+.c:hover{background:#D3D7CE}
+.cta{display:block;width:100%;padding:16px;background:var(--vert);color:var(--creme);border:none;border-radius:4px;font-family:inherit;font-weight:500;font-size:14px;letter-spacing:.5px;cursor:pointer;margin-top:28px;transition:opacity .15s}
+.cta:hover{opacity:.92}
+.cta:disabled{opacity:.4;cursor:not-allowed}
+.cta.g{background:transparent;border:1px solid var(--vert);color:var(--vert)}
+.leg{text-align:center;font-size:11px;color:var(--texte-2);font-style:italic;margin-top:12px}
+.re{font-weight:500;font-size:11px;letter-spacing:2.5px;color:var(--or);margin-bottom:12px;text-transform:uppercase}
+.blk{background:var(--vert);color:var(--creme);padding:28px 24px;border-radius:4px;margin-top:14px}
+.blk-l{font-size:12px;color:rgba(250,249,246,.7);margin-bottom:6px;text-transform:uppercase;letter-spacing:1.5px}
+.blk-t{font-family:'Playfair Display';font-weight:500;font-size:22px;margin-bottom:14px}
+.big{font-family:'Playfair Display';font-weight:500;font-size:clamp(38px,9vw,54px);line-height:1;letter-spacing:-1px}
+.sm{font-size:16px;color:rgba(250,249,246,.7);margin-left:6px}
+.msg{font-size:13px;color:rgba(250,249,246,.9);margin-top:12px;line-height:1.5}
+.gr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.gr-c{background:rgba(250,249,246,.08);border:1px solid rgba(250,249,246,.15);padding:12px;border-radius:4px}
+.gr-l{font-size:10px;color:rgba(250,249,246,.6);text-transform:uppercase;letter-spacing:1px}
+.gr-v{font-family:'Playfair Display';font-size:20px;color:var(--creme);margin-top:4px}
+.blk2{background:var(--creme-2);color:var(--texte);padding:24px;border-radius:4px;margin-top:14px;border:1px solid var(--bord)}
+.blk2 .blk-l{color:var(--or)}
+.blk2 .blk-t{color:var(--texte)}
+.blk2 .big{color:var(--vert)}
+.blk2 .msg{color:var(--texte-2)}
+.blk2 .sm{color:var(--texte-2)}
+.blk2 .gr-c{background:var(--creme);border-color:var(--bord)}
+.blk2 .gr-l{color:var(--texte-2)}
+.blk2 .gr-v{color:var(--vert)}
+.tz{display:flex;gap:10px;padding:14px;background:var(--vert-c);border-radius:4px;margin-top:12px;align-items:flex-start}
+.tz p{font-size:12px;line-height:1.5;color:var(--vert);font-style:italic}
+.rec{display:flex;padding:14px;background:var(--creme-2);border-radius:4px;margin-top:20px;gap:12px}
+.rec-i{flex:1}
+.rec-l{font-size:11px;color:var(--texte-2);letter-spacing:.4px}
+.rec-v{font-weight:500;font-size:15px;margin-top:3px}
+.disc{font-size:11px;line-height:1.5;color:var(--texte-2);margin-top:20px;font-style:italic}
+.cg{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+.cg .cta{margin-top:0}
+.ov{position:fixed;inset:0;background:rgba(26,26,26,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
+.ov.on{opacity:1;pointer-events:auto}
+.mo{background:var(--creme);padding:26px;border-radius:6px;width:100%;max-width:460px;position:relative}
+.mo-x{position:absolute;top:12px;right:14px;border:none;background:none;cursor:pointer;color:var(--texte-2);font-size:22px}
+.mo-e{font-weight:500;font-size:10px;letter-spacing:2.5px;color:var(--or);margin-bottom:8px;text-transform:uppercase}
+.mo-t{font-family:'Playfair Display';font-weight:500;font-size:22px;margin-bottom:6px}
+.mo input,.mo textarea{width:100%;padding:12px;border:1px solid var(--bord);border-radius:4px;font-family:inherit;font-size:15px;margin-top:4px;outline:none;resize:vertical}
+.mo textarea{min-height:80px}
+.mo input:focus,.mo textarea:focus{border-color:var(--vert)}
+.suc{text-align:center;padding:12px 0}
+.suc-ic{font-size:44px;color:var(--success);margin-bottom:10px}
+.er{color:#A34848;font-size:13px;margin-top:8px}
+.hd{display:none!important}
+@media(max-width:520px){.gr{grid-template-columns:1fr 1fr}}
+</style></head><body>
+
+<section class="hero"><div class="hero-in">
+<div class="eyebrow">ESTIMATION PATRIMONIALE · GRATUIT</div>
+<h1>Découvrez votre potentiel<br>d'optimisation.</h1>
+<p>3 minutes pour identifier vos leviers d'économie fiscale, de gain sur votre épargne et d'optimisation successorale.</p>
+</div></section>
+
+<div class="prog"><div class="prog-in">
+<div class="ps on" id="p1"><div class="ps-n">01</div><div class="ps-l">Votre profil</div></div>
+<div class="ps" id="p2"><div class="ps-n">02</div><div class="ps-l">Vos chiffres</div></div>
+<div class="ps" id="p3"><div class="ps-n">03</div><div class="ps-l">Votre estimation</div></div>
+</div></div>
+
+<div class="wrap">
+
+<!-- Étape 1 -->
+<section class="sec" id="s1">
+<div class="q">Votre situation en un coup d'œil</div>
+<div class="h">Ces informations restent confidentielles et servent au calcul.</div>
+
+<div class="f"><div class="lb">Situation familiale</div><div class="pr" id="sit"></div></div>
+<div class="f"><div class="lb">Enfants à charge</div><div class="pr" id="enf"></div></div>
+<div class="f"><div class="lb">Votre âge</div><div class="nr"><input id="age" type="number" inputmode="numeric" placeholder="0"><span class="u">ans</span></div><div class="cr" id="a-c"></div></div>
+
+<div class="f"><div class="lb">Votre objectif prioritaire</div><div class="pr" id="obj"></div></div>
+
+<button class="cta" id="b1" disabled>Continuer →</button>
+</section>
+
+<!-- Étape 2 -->
+<section class="sec hd" id="s2">
+<div class="q">Vos chiffres clés</div>
+<div class="h">Estimations rapides. Vous pourrez tout affiner ensuite.</div>
+
+<div class="f"><div class="lb">Revenus annuels nets du foyer</div><div class="nr"><input id="rev" type="number" inputmode="numeric" placeholder="0"><span class="u">€/an</span></div><div class="cr" id="r-c"></div></div>
+<div class="f"><div class="lb">Mensualités de crédits en cours</div><div class="nr"><input id="cre" type="number" inputmode="numeric" placeholder="0"><span class="u">€/mois</span></div><div class="cr" id="cr-c"></div></div>
+<div class="f"><div class="lb">Capacité d'épargne mensuelle</div><div class="nr"><input id="ep" type="number" inputmode="numeric" placeholder="0"><span class="u">€/mois</span></div><div class="cr" id="e-c"></div></div>
+<div class="f"><div class="lb">Épargne sur livrets (A, LDDS…)</div><div class="nr"><input id="liv" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="l-c"></div></div>
+<div class="f"><div class="lb">Assurance-vie / PER / PEA</div><div class="nr"><input id="av" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="av-c"></div></div>
+<div class="f"><div class="lb">Autres placements (compte-titres…)</div><div class="nr"><input id="aut" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="au-c"></div></div>
+<div class="f"><div class="lb">Patrimoine immobilier total (RP + locatif)</div><div class="nr"><input id="imm" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="i-c"></div></div>
+
+<button class="cta" id="b2">Calculer mon estimation</button>
+<div class="leg">Aucune donnée personnelle n'est envoyée à ce stade.</div>
+</section>
+
+<!-- Étape 3 -->
+<section class="sec hd" id="s3">
+<div class="re">Votre potentiel d'optimisation</div>
+<div id="res"></div>
+<div class="disc">Estimations indicatives établies selon les informations déclarées et les hypothèses réglementaires en vigueur (barème 2026). Elles ne constituent pas un conseil personnalisé. Aucune garantie de résultat.</div>
+<div class="cg">
+<button class="cta" id="brdv">📅  Prendre rendez-vous — gratuit et sans engagement</button>
+<button class="cta g" id="brs">Recommencer une nouvelle estimation</button>
+</div>
+</section>
+
+</div>
+
+<!-- Modal RDV -->
+<div class="ov" id="mov"><div class="mo">
+<button class="mo-x" id="mx">&times;</button>
+<div id="mf">
+<div class="mo-e">1er entretien offert · sans engagement</div>
+<div class="mo-t">Prendre rendez-vous</div>
+<div class="h">Un conseiller vous rappelle sous 48h pour analyser vos pistes.</div>
+<div class="f"><div class="lb">Nom complet</div><input id="ln" type="text"></div>
+<div class="f"><div class="lb">Email</div><input id="le" type="email"></div>
+<div class="f"><div class="lb">Téléphone</div><input id="lp" type="tel"></div>
+<div class="f"><div class="lb">Message (facultatif)</div><textarea id="lm" placeholder="Précisez vos disponibilités ou questions"></textarea></div>
+<div class="er hd" id="lerr"></div>
+<button class="cta" id="ls">Envoyer ma demande</button>
+</div>
+<div class="suc hd" id="msuc">
+<div class="suc-ic">✓</div>
+<div class="q">Demande envoyée</div>
+<div class="h">Vous serez recontacté(e) sous 48 heures pour votre rendez-vous offert.</div>
+<button class="cta" onclick="cm()">Fermer</button>
+</div>
+</div></div>
+
+<script>
+// ═══ MOTEUR DE CALCUL (portage JS de server_rdv.py) ═══
+// Barème IR 2026 (revenus 2025) : (seuil_bas, taux, decote_par_part)
+const BAREME_IR=[[0,0,0],[11600,.11,1276],[29580,.30,6896.01],[84578,.41,16199.48],[181918,.45,23476.16]];
+const PLAFOND_QF_DEMI_PART=1807;
+const TAUX_END_MAX=.35;
+const TAUX_CRED=.04;
+const DUREE_CRED=25;
+const ABAT_AV_DECES=152500;
+const HORIZONS=[10,15,20];
+const TAUX_CIBLES=[.05,.06,.07];
+const TAUX_ACT=.02;
+
+function parts(sit,enf){let b=sit==='marie'?2:1;if(enf<=0)return b;if(enf<=2)return b+.5*enf;return b+1+(enf-2)}
+function irTr(rev,p){if(p<=0)p=1;if(rev<=0)return{ir:0,tmi:0};let rpp=rev/p,tmi=0,dec=0;for(const[s,t,d]of BAREME_IR){if(rpp>=s){tmi=Math.round(t*100);dec=d}else break}return{ir:Math.max(0,rev*(tmi/100)-dec*p),tmi}}
+function irTmi(rev,p,pb){if(rev<=0)return{ir:0,tmi:0};if(p<=pb){const r=irTr(rev,p);return{ir:Math.round(r.ir),tmi:r.tmi}}const sansQf=irTr(rev,pb),avecQf=irTr(rev,p);const av=sansQf.ir-avecQf.ir;const nb=(p-pb)*2;const pl=nb*PLAFOND_QF_DEMI_PART;const avR=Math.max(0,Math.min(av,pl));return{ir:Math.max(0,Math.round(sansQf.ir-avR)),tmi:avecQf.tmi}}
+function nuePropPct(a){if(a<21)return .1;if(a<31)return .2;if(a<41)return .3;if(a<51)return .4;if(a<61)return .5;if(a<71)return .6;return .7}
+function capEmp(rev,mens){const rm=rev/12;const mMax=rm*TAUX_END_MAX;const mDisp=Math.max(0,mMax-mens);const i=TAUX_CRED/12;const n=DUREE_CRED*12;return mDisp>0?mDisp*(1-Math.pow(1+i,-n))/i:0}
+
+// Estimation fiscale (portage cascade Malraux/MH/Denormandie/PER)
+function estimFiscal(d){
+  const{obj,rev,ep,cre,tmi,ir}=d;const cap=capEmp(rev,cre*12);const peutEmp=cap>=140000;
+  let eco=0;
+  if(obj==='retraite'){if(tmi>=30){eco=Math.round(Math.min(ep*12,rev*.10,35000)*tmi/100)}else if(tmi>=11){eco=Math.round(Math.min(ep*12,rev*.10,15000)*tmi/100)}}
+  else if(obj==='fiscalite'){
+    if(ir>20000&&tmi>=41&&peutEmp)eco=Math.round(Math.min(ir*.7,20000));
+    else if(ir>9000&&tmi>=30&&peutEmp)eco=Math.round(Math.min(ir*.7,12000));
+    else if(ir>2500&&peutEmp)eco=Math.round(Math.min(ir*.5,5000));
+    else if(tmi>=30)eco=Math.round(Math.min(ep*12,rev*.10,25000)*tmi/100);
+    else if(tmi>=11)eco=Math.round(Math.min(ep*12,rev*.10,12000)*tmi/100);
+  }else if(obj==='valoriser'){if(tmi>=30)eco=Math.round(Math.min(ep*12,rev*.10,20000)*tmi/100)}
+  else if(obj==='transmission'){if(tmi>=30)eco=Math.round(Math.min(ep*12,rev*.10,25000)*tmi/100)}
+  const parH={};for(const n of HORIZONS)parH[n+'ans']=Math.round(eco*n);
+  return{eco,tmi,ir,parH,levier:eco>500}
+}
+
+// Gain potentiel placement 2% vs 5/6/7%
+function estimPlac(d){
+  const{liv,av,aut,ep}=d;const c0=liv+av+aut;const vpm=ep*12;const par={};
+  for(const n of HORIZONS){const o={};let cAct=c0*Math.pow(1+TAUX_ACT,n)+vpm*(Math.pow(1+TAUX_ACT,n)-1)/TAUX_ACT;o.placement_actuel_2pct=Math.round(cAct);
+    for(const t of TAUX_CIBLES){const cap=c0*Math.pow(1+t,n)+vpm*(Math.pow(1+t,n)-1)/t;const gain=cap-cAct;o['gain_'+Math.round(t*100)]=Math.round(gain);o['cap_'+Math.round(t*100)]=Math.round(cap)}
+    par[n+'ans']=o}
+  return{c0,vpm:ep,par}
+}
+
+// Transmission
+function estimTr(d){
+  const{enf,av,imm,liv,aut,age,obj}=d;const nbB=Math.max(1,enf);const pl=ABAT_AV_DECES*nbB;
+  const avH=Math.min(av,pl);const potAv=Math.max(0,pl-av);
+  const patFin=liv+av+aut;const total=patFin+imm;const ratio=total>0?imm/total:0;
+  const dem=obj==='transmission'&&ratio>=.7&&imm>=150000&&age<70;
+  const npPct=dem?nuePropPct(age):0;const bt=dem?Math.round(imm*npPct):0;
+  return{nbB,pl,potAv,dem,bt,npPct,ratio:Math.round(ratio*100)}
+}
+
+function fmt(n){return Math.round(n).toLocaleString('fr-FR')}
+function fmtE(n){return fmt(n)+' €'}
+function fmtK(n){return n>=1000?Math.round(n/1000).toLocaleString('fr-FR')+' k€':fmtE(n)}
+
+// ═══ UI ═══
+const st={sit:'marie',enf:0,age:0,obj:null,rev:0,cre:0,ep:0,liv:0,av:0,aut:0,imm:0,r:null};
+
+// Pills situation
+[{v:'celibataire',l:'Célibataire / Divorcé(e) / Veuf(ve)'},{v:'marie',l:'Marié(e) / Pacsé(e)'}].forEach(s=>{const p=document.createElement('div');p.className='p'+(st.sit===s.v?' on':'');p.textContent=s.l;p.onclick=()=>{document.querySelectorAll('#sit .p').forEach(x=>x.classList.remove('on'));p.classList.add('on');st.sit=s.v;chk1()};document.getElementById('sit').appendChild(p)});
+[0,1,2,3,4].forEach(n=>{const p=document.createElement('div');p.className='p'+(st.enf===n?' on':'');p.textContent=n===4?'4 +':n;p.onclick=()=>{document.querySelectorAll('#enf .p').forEach(x=>x.classList.remove('on'));p.classList.add('on');st.enf=n;chk1()};document.getElementById('enf').appendChild(p)});
+[{v:'fiscalite',l:'Réduire mes impôts'},{v:'retraite',l:'Préparer ma retraite'},{v:'transmission',l:'Préparer ma transmission'},{v:'valoriser',l:'Faire fructifier mon épargne'}].forEach(o=>{const p=document.createElement('div');p.className='p';p.textContent=o.l;p.onclick=()=>{document.querySelectorAll('#obj .p').forEach(x=>x.classList.remove('on'));p.classList.add('on');st.obj=o.v;chk1()};document.getElementById('obj').appendChild(p)});
+
+// Chips helper
+function ch(id,inp,vals,fld,fmt){const r=document.getElementById(id);const el=document.getElementById(inp);vals.forEach(v=>{const b=document.createElement('button');b.className='c';b.textContent=fmt?fmt(v):v.toLocaleString('fr-FR');b.onclick=e=>{e.preventDefault();el.value=v;el.dispatchEvent(new Event('input'))};r.appendChild(b)});el.addEventListener('input',()=>{st[fld]=parseInt(el.value||'0');if(fld==='age')chk1();else chk2()})}
+ch('a-c','age',[30,40,50,60,70],'age');
+ch('r-c','rev',[30000,50000,80000,120000,180000],'rev');
+ch('cr-c','cre',[0,300,800,1500],'cre');
+ch('e-c','ep',[100,300,800,1500,3000],'ep');
+ch('l-c','liv',[0,5000,20000,50000],'liv');
+ch('av-c','av',[0,20000,80000,200000],'av');
+ch('au-c','aut',[0,10000,50000,150000],'aut');
+ch('i-c','imm',[0,150000,400000,800000],'imm');
+
+function chk1(){document.getElementById('b1').disabled=!(st.age>0&&st.obj)}
+function chk2(){document.getElementById('b2').disabled=!(st.rev>0)}
+document.getElementById('b1').onclick=()=>{go(2)};
+document.getElementById('b2').onclick=compute;
+
+function go(n){['s1','s2','s3'].forEach((s,i)=>document.getElementById(s).classList.toggle('hd',i+1!==n));['p1','p2','p3'].forEach((p,i)=>document.getElementById(p).classList.toggle('on',i+1<=n));window.scrollTo({top:0,behavior:'smooth'})}
+
+function compute(){
+  const p=parts(st.sit,st.enf);const pb=st.sit==='marie'?2:1;const fisc=irTmi(st.rev,p,pb);
+  const d={...st,tmi:fisc.tmi,ir:fisc.ir};
+  st.r={fiscal:estimFiscal(d),placement:estimPlac(d),transmission:estimTr(d),tmi:fisc.tmi,ir:fisc.ir};
+  render();go(3);
+}
+
+function render(){
+  const r=st.r;const f=r.fiscal;const pl=r.placement;const tr=r.transmission;
+  const h=[];
+  // Bloc fiscal
+  if(f.eco>500){
+    h.push(`<div class="blk"><div class="blk-l">Économie fiscale potentielle</div><div><span class="big">${fmtE(f.eco)}</span><span class="sm">/ an</span></div><div class="msg">Selon votre profil, un levier fiscal pourrait représenter cette économie annuelle en activant les bons dispositifs adaptés à votre situation.</div>
+      <div class="gr">
+        <div class="gr-c"><div class="gr-l">Sur 10 ans</div><div class="gr-v">${fmtK(f.parH['10ans'])}</div></div>
+        <div class="gr-c"><div class="gr-l">Sur 15 ans</div><div class="gr-v">${fmtK(f.parH['15ans'])}</div></div>
+        <div class="gr-c"><div class="gr-l">Sur 20 ans</div><div class="gr-v">${fmtK(f.parH['20ans'])}</div></div>
+      </div></div>`);
+    h.push(`<div class="tz"><span>🔒</span><p>La stratégie précise pour atteindre ce gain vous est dévoilée lors de votre échange offert avec un conseiller.</p></div>`);
+  }
+  // Bloc placement
+  const g20_6=pl.par['20ans'].gain_6;const g10_5=pl.par['10ans'].gain_5;
+  if(pl.c0+pl.vpm*12*10>5000&&g20_6>0){
+    h.push(`<div class="blk2"><div class="blk-l">Gain potentiel sur votre épargne</div><div class="blk-t">Une meilleure allocation, un impact décuplé</div>
+      <div class="gr">
+        <div class="gr-c"><div class="gr-l">Gain sur 10 ans</div><div class="gr-v">+${fmtK(g10_5)}</div></div>
+        <div class="gr-c"><div class="gr-l">Gain sur 15 ans</div><div class="gr-v">+${fmtK(pl.par['15ans'].gain_6)}</div></div>
+        <div class="gr-c"><div class="gr-l">Gain sur 20 ans</div><div class="gr-v">+${fmtK(g20_6)}</div></div>
+      </div>
+      <div class="msg" style="color:var(--texte-2)">Avec une allocation optimisée, votre épargne pourrait générer ${fmtE(g20_6)} de plus sur 20 ans par rapport à un placement à 2 %/an.</div></div>`);
+  }
+  // Bloc transmission
+  if(tr.potAv>5000||tr.dem){
+    let msg='';
+    if(tr.pl>0)msg+=`En assurance-vie, jusqu'à <b>${fmtE(tr.pl)}</b> (${fmtE(ABAT_AV_DECES)} × ${tr.nbB} bénéficiaire${tr.nbB>1?'s':''}) peuvent être transmis hors droits de succession si versés avant vos 70 ans.`;
+    if(tr.potAv>5000)msg+=` <b>Potentiel non utilisé : ${fmtE(tr.potAv)}.</b>`;
+    if(tr.dem)msg+=` Votre patrimoine immobilier représente ${tr.ratio} % du total : une donation de la nue-propriété serait valorisée à ${Math.round(tr.npPct*100)} % de la valeur (base taxable ≈ ${fmtE(tr.bt)}), tout en conservant l'usufruit.`;
+    h.push(`<div class="blk"><div class="blk-l">Optimisation successorale</div><div class="blk-t">Ce que vous pouvez transmettre en avantage</div><div class="msg">${msg}</div></div>`);
+  }
+  if(h.length===0){
+    h.push(`<div class="blk2"><div class="blk-t">Votre situation semble déjà bien structurée</div><div class="msg" style="color:var(--texte-2)">Aucune source d'optimisation évidente à ce stade avec les informations fournies. Un entretien peut identifier des pistes complémentaires non visibles ici.</div></div>`);
+  }
+  // Récap
+  h.push(`<div class="rec"><div class="rec-i"><div class="rec-l">TMI estimée</div><div class="rec-v">${r.tmi} %</div></div><div class="rec-i"><div class="rec-l">IR estimé</div><div class="rec-v">${fmtE(r.ir)}/an</div></div><div class="rec-i"><div class="rec-l">Parts fiscales</div><div class="rec-v">${parts(st.sit,st.enf)}</div></div></div>`);
+  document.getElementById('res').innerHTML=h.join('');
+}
+
+document.getElementById('brs').onclick=()=>{location.reload()};
+document.getElementById('brdv').onclick=()=>om();
+document.getElementById('mx').onclick=cm;
+document.getElementById('mov').onclick=e=>{if(e.target.id==='mov')cm()};
+function om(){document.getElementById('mov').classList.add('on')}
+function cm(){document.getElementById('mov').classList.remove('on');document.getElementById('mf').classList.remove('hd');document.getElementById('msuc').classList.add('hd')}
+
+document.getElementById('ls').onclick=async()=>{
+  const n=document.getElementById('ln').value.trim(),e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value.trim(),m=document.getElementById('lm').value.trim();
+  const er=document.getElementById('lerr');er.classList.add('hd');
+  if(n.length<2||!/\S+@\S+\.\S+/.test(e)||p.length<6){er.textContent='Nom, email et téléphone sont requis.';er.classList.remove('hd');return}
+  const b=document.getElementById('ls');b.disabled=true;b.textContent='Envoi…';
+  // FormSubmit (envoi email direct sans backend) — remplacer VOTRE_EMAIL par votre vraie adresse
+  const email='VOTRE_EMAIL@example.com';
+  try{
+    await fetch('https://formsubmit.co/ajax/'+email,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({
+      _subject:'[Bilan RDV] Nouveau lead — '+n,nom:n,email:e,telephone:p,message:m,
+      objectif:st.obj,age:st.age,tmi:st.r?.tmi,economie_annuelle:st.r?.fiscal?.eco,gain_20ans:st.r?.placement?.par['20ans']?.gain_6,potentiel_av:st.r?.transmission?.potAv,
+    })});
+    document.getElementById('mf').classList.add('hd');document.getElementById('msuc').classList.remove('hd');
+  }catch(er){document.getElementById('lerr').textContent="Envoi échoué. Réessayez.";document.getElementById('lerr').classList.remove('hd')}
+  finally{b.disabled=false;b.textContent='Envoyer ma demande'}
+};
+</script>
+</body></html>
