@@ -1,327 +1,1291 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Estimation patrimoniale — Bilan gratuit</title><meta name="description" content="Découvrez votre potentiel d'optimisation patrimoniale en 3 minutes. Estimation gratuite, sans engagement."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet"><style>
-:root{--creme:#FAF9F6;--creme-2:#F0EFEA;--texte:#1A1A1A;--texte-2:#4A4A48;--vert:#2C4C3B;--vert-c:#DDE0DB;--or:#8B7355;--bord:#E3E1DB;--success:#3E6B52}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--creme);color:var(--texte);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
-.wrap{max-width:760px;margin:0 auto;padding:0 24px}
-.hero{background:var(--vert);color:var(--creme);padding:52px 24px 60px}
-.hero-in{max-width:760px;margin:0 auto}
-.eyebrow{font-weight:500;font-size:11px;letter-spacing:3px;color:var(--or);margin-bottom:12px;text-transform:uppercase}
-.hero h1{font-family:'Playfair Display';font-weight:500;font-size:clamp(30px,6vw,46px);line-height:1.1;letter-spacing:-.5px}
-.hero p{margin-top:16px;color:rgba(250,249,246,.85);font-size:15px;max-width:520px;line-height:1.5}
-.prog{display:flex;padding:20px 24px;border-bottom:1px solid var(--bord)}
-.prog-in{max-width:760px;margin:0 auto;display:flex;gap:8px;width:100%}
-.ps{flex:1;text-align:center;opacity:.35}
-.ps.on{opacity:1}
-.ps-n{font-family:'Playfair Display';font-size:20px;color:var(--bord)}
-.ps.on .ps-n{color:var(--vert)}
-.ps-l{font-size:10px;letter-spacing:.5px;color:var(--texte-2);margin-top:2px}
-.ps.on .ps-l{color:var(--vert);font-weight:500}
-.sec{padding:32px 0 48px}
-.q{font-family:'Playfair Display';font-weight:500;font-size:26px;line-height:1.25}
-.h{color:var(--texte-2);font-size:14px;line-height:1.5;margin-top:8px}
-.list{display:flex;flex-direction:column;gap:10px;margin-top:24px}
-.itm{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--creme-2);border:1px solid var(--bord);border-radius:4px;cursor:pointer;transition:all .15s}
-.itm:hover{background:#E7E5DE;border-color:var(--or)}
-.itm-ic{font-size:22px;flex-shrink:0}
-.itm-l{flex:1;font-weight:500;font-size:15px}
-.itm-s{font-size:12px;color:var(--texte-2);margin-top:2px;font-weight:400}
-.itm-a{color:var(--bord)}
-.f{margin-top:22px}
-.lb{font-size:12px;color:var(--texte-2);margin-bottom:6px;letter-spacing:.4px}
-.pr{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.p{padding:8px 14px;background:var(--creme-2);border:1px solid var(--bord);border-radius:999px;cursor:pointer;font-size:13px;user-select:none;transition:all .15s}
-.p.on{background:var(--vert);color:var(--creme);border-color:var(--vert);font-weight:500}
-.nr{display:flex;align-items:baseline;border-bottom:1px solid #C2BDB2;padding-bottom:6px}
-.nr input{flex:1;font-family:'Playfair Display';font-weight:500;font-size:30px;color:var(--texte);border:none;outline:none;background:transparent;padding:4px 0}
-.nr input::-webkit-outer-spin-button,.nr input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.nr .u{font-size:13px;color:var(--texte-2);margin-left:8px}
-.cr{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.c{padding:6px 12px;background:var(--vert-c);border-radius:999px;cursor:pointer;font-size:12px;color:var(--vert);border:none;font-family:inherit}
-.c:hover{background:#D3D7CE}
-.cta{display:block;width:100%;padding:16px;background:var(--vert);color:var(--creme);border:none;border-radius:4px;font-family:inherit;font-weight:500;font-size:14px;letter-spacing:.5px;cursor:pointer;margin-top:28px;transition:opacity .15s}
-.cta:hover{opacity:.92}
-.cta:disabled{opacity:.4;cursor:not-allowed}
-.cta.g{background:transparent;border:1px solid var(--vert);color:var(--vert)}
-.leg{text-align:center;font-size:11px;color:var(--texte-2);font-style:italic;margin-top:12px}
-.re{font-weight:500;font-size:11px;letter-spacing:2.5px;color:var(--or);margin-bottom:12px;text-transform:uppercase}
-.blk{background:var(--vert);color:var(--creme);padding:28px 24px;border-radius:4px;margin-top:14px}
-.blk-l{font-size:12px;color:rgba(250,249,246,.7);margin-bottom:6px;text-transform:uppercase;letter-spacing:1.5px}
-.blk-t{font-family:'Playfair Display';font-weight:500;font-size:22px;margin-bottom:14px}
-.big{font-family:'Playfair Display';font-weight:500;font-size:clamp(38px,9vw,54px);line-height:1;letter-spacing:-1px}
-.sm{font-size:16px;color:rgba(250,249,246,.7);margin-left:6px}
-.msg{font-size:13px;color:rgba(250,249,246,.9);margin-top:12px;line-height:1.5}
-.gr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
-.gr-c{background:rgba(250,249,246,.08);border:1px solid rgba(250,249,246,.15);padding:12px;border-radius:4px}
-.gr-l{font-size:10px;color:rgba(250,249,246,.6);text-transform:uppercase;letter-spacing:1px}
-.gr-v{font-family:'Playfair Display';font-size:20px;color:var(--creme);margin-top:4px}
-.blk2{background:var(--creme-2);color:var(--texte);padding:24px;border-radius:4px;margin-top:14px;border:1px solid var(--bord)}
-.blk2 .blk-l{color:var(--or)}
-.blk2 .blk-t{color:var(--texte)}
-.blk2 .big{color:var(--vert)}
-.blk2 .msg{color:var(--texte-2)}
-.blk2 .sm{color:var(--texte-2)}
-.blk2 .gr-c{background:var(--creme);border-color:var(--bord)}
-.blk2 .gr-l{color:var(--texte-2)}
-.blk2 .gr-v{color:var(--vert)}
-.tz{display:flex;gap:10px;padding:14px;background:var(--vert-c);border-radius:4px;margin-top:12px;align-items:flex-start}
-.tz p{font-size:12px;line-height:1.5;color:var(--vert);font-style:italic}
-.rec{display:flex;padding:14px;background:var(--creme-2);border-radius:4px;margin-top:20px;gap:12px}
-.rec-i{flex:1}
-.rec-l{font-size:11px;color:var(--texte-2);letter-spacing:.4px}
-.rec-v{font-weight:500;font-size:15px;margin-top:3px}
-.disc{font-size:11px;line-height:1.5;color:var(--texte-2);margin-top:20px;font-style:italic}
-.cg{display:flex;flex-direction:column;gap:10px;margin-top:24px}
-.cg .cta{margin-top:0}
-.ov{position:fixed;inset:0;background:rgba(26,26,26,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
-.ov.on{opacity:1;pointer-events:auto}
-.mo{background:var(--creme);padding:26px;border-radius:6px;width:100%;max-width:460px;position:relative}
-.mo-x{position:absolute;top:12px;right:14px;border:none;background:none;cursor:pointer;color:var(--texte-2);font-size:22px}
-.mo-e{font-weight:500;font-size:10px;letter-spacing:2.5px;color:var(--or);margin-bottom:8px;text-transform:uppercase}
-.mo-t{font-family:'Playfair Display';font-weight:500;font-size:22px;margin-bottom:6px}
-.mo input,.mo textarea{width:100%;padding:12px;border:1px solid var(--bord);border-radius:4px;font-family:inherit;font-size:15px;margin-top:4px;outline:none;resize:vertical}
-.mo textarea{min-height:80px}
-.mo input:focus,.mo textarea:focus{border-color:var(--vert)}
-.suc{text-align:center;padding:12px 0}
-.suc-ic{font-size:44px;color:var(--success);margin-bottom:10px}
-.er{color:#A34848;font-size:13px;margin-top:8px}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estimation patrimoniale — Bilan gratuit</title>
+<meta name="description" content="Découvrez votre potentiel d'optimisation patrimoniale en 3 minutes. Estimation gratuite, sans engagement.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#faf6ef; --ink:#1f2a24; --green:#1f4d3d; --green-light:#2e6b53;
+  --gold:#b8925a; --line:#e4dccb; --err:#b03a2e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding:24px 20px 60px}
+h1,h2{font-family:'Playfair Display',serif;color:var(--green);margin:0 0 6px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
+.subtitle{color:#5b6a62;font-size:15px;margin-bottom:28px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:16px}
+.progress{height:4px;background:var(--line);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-bar{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+label.field-label{display:block;font-weight:700;margin-bottom:6px;font-size:15px}
+.field-sub{color:#7a887f;font-size:13px;margin-bottom:10px}
+input[type=number],input[type=text],input[type=email],input[type=tel]{
+  width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:9px;
+  font-size:16px;font-family:inherit;background:#fdfcf9;color:var(--ink);margin-bottom:10px
+}
+input:focus{outline:2px solid var(--green-light);outline-offset:1px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{border:1px solid var(--line);border-radius:9px;padding:10px 16px;cursor:pointer;font-size:14px;background:#fdfcf9;user-select:none}
+.opt.sel{background:var(--green);color:#fff;border-color:var(--green)}
+.opt.multi.sel{background:var(--gold);border-color:var(--gold)}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
+button{font-family:inherit;font-size:15px;font-weight:700;border-radius:9px;padding:13px 22px;border:none;cursor:pointer}
+.btn-primary{background:var(--green);color:#fff;flex:1}
+.btn-primary:disabled{background:#a9b7ae;cursor:not-allowed}
+.btn-secondary{background:transparent;color:var(--green);border:1px solid var(--line)}
 .hd{display:none!important}
-@media(max-width:520px){.gr{grid-template-columns:1fr 1fr}}
-</style></head><body>
-
-<section class="hero"><div class="hero-in">
-<div class="eyebrow">ESTIMATION PATRIMONIALE · GRATUIT</div>
-<h1>Découvrez votre potentiel<br>d'optimisation.</h1>
-<p>3 minutes pour identifier vos leviers d'économie fiscale, de gain sur votre épargne et d'optimisation successorale.</p>
-</div></section>
-
-<div class="prog"><div class="prog-in">
-<div class="ps on" id="p1"><div class="ps-n">01</div><div class="ps-l">Votre profil</div></div>
-<div class="ps" id="p2"><div class="ps-n">02</div><div class="ps-l">Vos chiffres</div></div>
-<div class="ps" id="p3"><div class="ps-n">03</div><div class="ps-l">Votre estimation</div></div>
-</div></div>
-
-<div class="wrap">
-
-<!-- Étape 1 -->
-<section class="sec" id="s1">
-<div class="q">Votre situation en un coup d'œil</div>
-<div class="h">Ces informations restent confidentielles et servent au calcul.</div>
-
-<div class="f"><div class="lb">Situation familiale</div><div class="pr" id="sit"></div></div>
-<div class="f"><div class="lb">Enfants à charge</div><div class="pr" id="enf"></div></div>
-<div class="f"><div class="lb">Votre âge</div><div class="nr"><input id="age" type="number" inputmode="numeric" placeholder="0"><span class="u">ans</span></div><div class="cr" id="a-c"></div></div>
-
-<div class="f"><div class="lb">Votre objectif prioritaire</div><div class="pr" id="obj"></div></div>
-
-<button class="cta" id="b1" disabled>Continuer →</button>
-</section>
-
-<!-- Étape 2 -->
-<section class="sec hd" id="s2">
-<div class="q">Vos chiffres clés</div>
-<div class="h">Estimations rapides. Vous pourrez tout affiner ensuite.</div>
-
-<div class="f"><div class="lb">Revenus annuels nets du foyer</div><div class="nr"><input id="rev" type="number" inputmode="numeric" placeholder="0"><span class="u">€/an</span></div><div class="cr" id="r-c"></div></div>
-<div class="f"><div class="lb">Mensualités de crédits en cours</div><div class="nr"><input id="cre" type="number" inputmode="numeric" placeholder="0"><span class="u">€/mois</span></div><div class="cr" id="cr-c"></div></div>
-<div class="f"><div class="lb">Capacité d'épargne mensuelle</div><div class="nr"><input id="ep" type="number" inputmode="numeric" placeholder="0"><span class="u">€/mois</span></div><div class="cr" id="e-c"></div></div>
-<div class="f"><div class="lb">Épargne sur livrets (A, LDDS…)</div><div class="nr"><input id="liv" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="l-c"></div></div>
-<div class="f"><div class="lb">Assurance-vie / PER / PEA</div><div class="nr"><input id="av" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="av-c"></div></div>
-<div class="f"><div class="lb">Autres placements (compte-titres…)</div><div class="nr"><input id="aut" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="au-c"></div></div>
-<div class="f"><div class="lb">Patrimoine immobilier total (RP + locatif)</div><div class="nr"><input id="imm" type="number" inputmode="numeric" placeholder="0"><span class="u">€</span></div><div class="cr" id="i-c"></div></div>
-
-<button class="cta" id="b2">Calculer mon estimation</button>
-<div class="leg">Aucune donnée personnelle n'est envoyée à ce stade.</div>
-</section>
-
-<!-- Étape 3 -->
-<section class="sec hd" id="s3">
-<div class="re">Votre potentiel d'optimisation</div>
-<div id="res"></div>
-<div class="disc">Estimations indicatives établies selon les informations déclarées et les hypothèses réglementaires en vigueur (barème 2026). Elles ne constituent pas un conseil personnalisé. Aucune garantie de résultat.</div>
-<div class="cg">
-<button class="cta" id="brdv">📅  Prendre rendez-vous — gratuit et sans engagement</button>
-<button class="cta g" id="brs">Recommencer une nouvelle estimation</button>
-</div>
-</section>
-
-</div>
-
-<!-- Modal RDV -->
-<div class="ov" id="mov"><div class="mo">
-<button class="mo-x" id="mx">&times;</button>
-<div id="mf">
-<div class="mo-e">1er entretien offert · sans engagement</div>
-<div class="mo-t">Prendre rendez-vous</div>
-<div class="h">Un conseiller vous rappelle sous 48h pour analyser vos pistes.</div>
-<div class="f"><div class="lb">Nom complet</div><input id="ln" type="text"></div>
-<div class="f"><div class="lb">Email</div><input id="le" type="email"></div>
-<div class="f"><div class="lb">Téléphone</div><input id="lp" type="tel"></div>
-<div class="f"><div class="lb">Message (facultatif)</div><textarea id="lm" placeholder="Précisez vos disponibilités ou questions"></textarea></div>
-<div class="er hd" id="lerr"></div>
-<button class="cta" id="ls">Envoyer ma demande</button>
-</div>
-<div class="suc hd" id="msuc">
-<div class="suc-ic">✓</div>
-<div class="q">Demande envoyée</div>
-<div class="h">Vous serez recontacté(e) sous 48 heures pour votre rendez-vous offert.</div>
-<button class="cta" onclick="cm()">Fermer</button>
-</div>
-</div></div>
+.result-hero{background:var(--green);color:#fff;border-radius:16px;padding:32px 26px;text-align:center;margin-bottom:20px}
+.result-hero .amount{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;margin:10px 0}
+.result-hero .years{color:#d9e6de;font-size:15px}
+.result-msg{font-size:15px;color:#3d473f;margin-bottom:22px}
+.mention{font-size:12px;color:#8a968d;border-top:1px solid var(--line);padding-top:14px;margin-top:18px}
+.err{color:var(--err);font-size:13px;margin-top:8px}
+.cta-row{display:flex;gap:10px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
 
 <script>
-// ═══ MOTEUR DE CALCUL (portage JS de server_rdv.py) ═══
-// Barème IR 2026 (revenus 2025) : (seuil_bas, taux, decote_par_part)
-const BAREME_IR=[[0,0,0],[11600,.11,1276],[29580,.30,6896.01],[84578,.41,16199.48],[181918,.45,23476.16]];
-const PLAFOND_QF_DEMI_PART=1807;
-const TAUX_END_MAX=.35;
-const TAUX_CRED=.04;
-const DUREE_CRED=25;
-const ABAT_AV_DECES=152500;
-const HORIZONS=[10,15,20];
-const TAUX_CIBLES=[.05,.06,.07];
-const TAUX_ACT=.02;
+// ════════════════════════════════════════════════════════════════════════
+// MOTEUR DE CALCUL PATRIMONIAL — portage JS fidèle de server.py (moteur_simulateur.py)
+// Barèmes 2026 (IR, IFI, droits de succession) — France
+// ════════════════════════════════════════════════════════════════════════
 
-function parts(sit,enf){let b=sit==='marie'?2:1;if(enf<=0)return b;if(enf<=2)return b+.5*enf;return b+1+(enf-2)}
-function irTr(rev,p){if(p<=0)p=1;if(rev<=0)return{ir:0,tmi:0};let rpp=rev/p,tmi=0,dec=0;for(const[s,t,d]of BAREME_IR){if(rpp>=s){tmi=Math.round(t*100);dec=d}else break}return{ir:Math.max(0,rev*(tmi/100)-dec*p),tmi}}
-function irTmi(rev,p,pb){if(rev<=0)return{ir:0,tmi:0};if(p<=pb){const r=irTr(rev,p);return{ir:Math.round(r.ir),tmi:r.tmi}}const sansQf=irTr(rev,pb),avecQf=irTr(rev,p);const av=sansQf.ir-avecQf.ir;const nb=(p-pb)*2;const pl=nb*PLAFOND_QF_DEMI_PART;const avR=Math.max(0,Math.min(av,pl));return{ir:Math.max(0,Math.round(sansQf.ir-avR)),tmi:avecQf.tmi}}
-function nuePropPct(a){if(a<21)return .1;if(a<31)return .2;if(a<41)return .3;if(a<51)return .4;if(a<61)return .5;if(a<71)return .6;return .7}
-function capEmp(rev,mens){const rm=rev/12;const mMax=rm*TAUX_END_MAX;const mDisp=Math.max(0,mMax-mens);const i=TAUX_CRED/12;const n=DUREE_CRED*12;return mDisp>0?mDisp*(1-Math.pow(1+i,-n))/i:0}
+const PRODUIT_LABELS = {
+  per: "PER (Plan Épargne Retraite)", pea: "PEA", assurance_vie: "Assurance-vie",
+  scpi: "SCPI", pea_pme: "PEA-PME", cto: "Compte-titres ordinaire",
+  livret_a: "Livret A / LDDS", cap: "Contrat de capitalisation", sofica: "SOFICA",
+  fip_fcpi: "FIP / FCPI", denormandie: "Denormandie", malraux: "Malraux",
+  monuments_historiques: "Monuments Historiques", deficit_foncier: "Déficit foncier",
+  lmnp_neuf: "LMNP Neuf", lmnp_ancien: "LMNP Ancien", lmnp_para_hotelier: "LMNP Para-Hôtelier",
+  immo_rendement_neuf: "Immobilier de rendement (Neuf)", immo_rendement_ancien: "Immobilier de rendement (Ancien)",
+  scpi_nue_propriete: "SCPI en nue-propriété", cap_demembre: "Contrat de capitalisation démembré",
+  av_luxembourg: "Assurance-vie luxembourgeoise",
+};
 
-// Estimation fiscale (portage cascade Malraux/MH/Denormandie/PER)
-function estimFiscal(d){
-  const{obj,rev,ep,cre,tmi,ir}=d;const cap=capEmp(rev,cre*12);const peutEmp=cap>=140000;
-  let eco=0;
-  if(obj==='retraite'){if(tmi>=30){eco=Math.round(Math.min(ep*12,rev*.10,35000)*tmi/100)}else if(tmi>=11){eco=Math.round(Math.min(ep*12,rev*.10,15000)*tmi/100)}}
-  else if(obj==='fiscalite'){
-    if(ir>20000&&tmi>=41&&peutEmp)eco=Math.round(Math.min(ir*.7,20000));
-    else if(ir>9000&&tmi>=30&&peutEmp)eco=Math.round(Math.min(ir*.7,12000));
-    else if(ir>2500&&peutEmp)eco=Math.round(Math.min(ir*.5,5000));
-    else if(tmi>=30)eco=Math.round(Math.min(ep*12,rev*.10,25000)*tmi/100);
-    else if(tmi>=11)eco=Math.round(Math.min(ep*12,rev*.10,12000)*tmi/100);
-  }else if(obj==='valoriser'){if(tmi>=30)eco=Math.round(Math.min(ep*12,rev*.10,20000)*tmi/100)}
-  else if(obj==='transmission'){if(tmi>=30)eco=Math.round(Math.min(ep*12,rev*.10,25000)*tmi/100)}
-  const parH={};for(const n of HORIZONS)parH[n+'ans']=Math.round(eco*n);
-  return{eco,tmi,ir,parH,levier:eco>500}
+const PASS_2026 = 48060;
+const PLAFOND_QF_PAR_DEMI_PART = 1807;
+
+// (seuil_bas, taux, decote_par_part)
+const BAREME_IR_2026 = [
+  [0, 0.00, 0.0],
+  [11600, 0.11, 1276.0],
+  [29580, 0.30, 6896.01],
+  [84578, 0.41, 16199.48],
+  [181918, 0.45, 23476.16],
+];
+
+// (seuil_bas, taux, abattement_fixe)
+const BAREME_IFI_2026 = [
+  [800000, 0.000, 0.0],
+  [1300001, 0.005, 4000.0],
+  [2570001, 0.007, 6600.0],
+  [5000001, 0.010, 14310.0],
+  [10000001, 0.0125, 26810.0],
+  [15000000000, 0.015, 51810.0],
+];
+const SEUIL_IMPOSITION_IFI = 1300000;
+
+// (seuil_bas, taux, décote) — art. 777 CGI, ligne directe
+const BAREME_DROITS_SUCCESSION_LIGNE_DIRECTE = [
+  [0, 0.05, 0.0],
+  [8072, 0.10, 404.0],
+  [12109, 0.15, 1009.0],
+  [15932, 0.20, 1806.0],
+  [552324, 0.30, 57038.0],
+  [902838, 0.40, 147322.0],
+  [1805677, 0.45, 237606.0],
+];
+
+const ABATTEMENT_DONATION_LIGNE_DIRECTE = 100000;
+const ABATTEMENT_AV_DECES_PAR_BENEFICIAIRE = 152500;
+
+const PLAFOND_PER_PCT_REVENU = 0.10;
+const PLAFOND_PER_MIN = Math.round(PASS_2026 * 0.10);
+const MULTIPLE_PER_BESOIN_FISCAL = 2.5;
+
+const TAUX_CREDIT_ANNUEL = 0.040;
+const DUREE_CREDIT_ANNEES = 25;
+const TAUX_ENDETTEMENT_MAX = 0.35;
+const PONDERATION_REVENUS_LOCATIFS = 0.70;
+const RENDEMENT_LOCATIF_ESTIME = 0.04;
+const RATIO_TRAVAUX_DEFISCALISABLE = 0.80;
+const SEUIL_MARCHE_MALRAUX_MH = 130000;
+const TAUX_FRAIS_NOTAIRE_ANCIEN = 0.08;
+const TAUX_FRAIS_NOTAIRE_NEUF = 0.04;
+const DISPOSITIFS_NEUFS = new Set(["lmnp_neuf", "immo_rendement_neuf"]);
+
+const TAUX_MALRAUX = 0.30;
+const DUREE_MALRAUX_AVEC_PROROGATION = 6;
+const MULTIPLE_ENVELOPPE_TRAVAUX_MALRAUX_MH = 20;
+
+const SEUIL_RATIO_IMMO_TRANSMISSION = 0.70;
+const SEUIL_PATRIMOINE_IMMO_DEMEMBREMENT = 150000;
+const AGE_MAX_DEMEMBREMENT_INTERESSANT = 70;
+const SEUIL_LIQUIDITES_CAPI_DEMEMBRE = 152500;
+
+const SEUIL_AV_LUXEMBOURG = 100000;
+const SEUIL_AV_LUXEMBOURG_PREMIUM = 1000000;
+
+function round(x) { return Math.round(x); }
+
+// ── Fiscalité : IR / TMI / parts fiscales ──────────────────────────────────
+
+function computePartsFiscales(situationFamiliale, enfants) {
+  const base = (situationFamiliale === "marie" || situationFamiliale === "pacse") ? 2.0 : 1.0;
+  if (enfants <= 0) return base;
+  if (enfants <= 2) return base + 0.5 * enfants;
+  return base + 0.5 * 2 + 1.0 * (enfants - 2);
 }
 
-// Gain potentiel placement 2% vs 5/6/7%
-function estimPlac(d){
-  const{liv,av,aut,ep}=d;const c0=liv+av+aut;const vpm=ep*12;const par={};
-  for(const n of HORIZONS){const o={};let cAct=c0*Math.pow(1+TAUX_ACT,n)+vpm*(Math.pow(1+TAUX_ACT,n)-1)/TAUX_ACT;o.placement_actuel_2pct=Math.round(cAct);
-    for(const t of TAUX_CIBLES){const cap=c0*Math.pow(1+t,n)+vpm*(Math.pow(1+t,n)-1)/t;const gain=cap-cAct;o['gain_'+Math.round(t*100)]=Math.round(gain);o['cap_'+Math.round(t*100)]=Math.round(cap)}
-    par[n+'ans']=o}
-  return{c0,vpm:ep,par}
+function irBrutParTranche(revenuImposable, parts) {
+  if (parts <= 0) parts = 1.0;
+  if (revenuImposable <= 0) return { ir: 0.0, tmi: 0 };
+  const revenuParPart = revenuImposable / parts;
+  let tmi = 0, decote = 0.0;
+  for (const [seuilBas, taux, dec] of BAREME_IR_2026) {
+    if (revenuParPart >= seuilBas) { tmi = Math.round(taux * 100); decote = dec; }
+    else break;
+  }
+  const irBrut = revenuImposable * (tmi / 100.0) - (decote * parts);
+  return { ir: Math.max(0.0, irBrut), tmi };
 }
 
-// Transmission
-function estimTr(d){
-  const{enf,av,imm,liv,aut,age,obj}=d;const nbB=Math.max(1,enf);const pl=ABAT_AV_DECES*nbB;
-  const avH=Math.min(av,pl);const potAv=Math.max(0,pl-av);
-  const patFin=liv+av+aut;const total=patFin+imm;const ratio=total>0?imm/total:0;
-  const dem=obj==='transmission'&&ratio>=.7&&imm>=150000&&age<70;
-  const npPct=dem?nuePropPct(age):0;const bt=dem?Math.round(imm*npPct):0;
-  return{nbB,pl,potAv,dem,bt,npPct,ratio:Math.round(ratio*100)}
+function computeIrTmi(revenuImposable, parts, partsBase = 2.0) {
+  if (revenuImposable <= 0) return { ir: 0, tmi: 0, revenu_par_part: 0 };
+  if (parts <= partsBase) {
+    const res = irBrutParTranche(revenuImposable, parts);
+    return { ir: round(res.ir), tmi: res.tmi, revenu_par_part: round(revenuImposable / parts) };
+  }
+  const resSansQf = irBrutParTranche(revenuImposable, partsBase);
+  const resAvecQf = irBrutParTranche(revenuImposable, parts);
+  const avantageReel = resSansQf.ir - resAvecQf.ir;
+  const nbDemiPartsSupp = (parts - partsBase) * 2;
+  const plafondAvantage = nbDemiPartsSupp * PLAFOND_QF_PAR_DEMI_PART;
+  let avantageRetenu = Math.min(avantageReel, plafondAvantage);
+  avantageRetenu = Math.max(0.0, avantageRetenu);
+  const irFinal = Math.max(0.0, resSansQf.ir - avantageRetenu);
+  return { ir: round(irFinal), tmi: resAvecQf.tmi, revenu_par_part: round(revenuImposable / parts) };
 }
 
-function fmt(n){return Math.round(n).toLocaleString('fr-FR')}
-function fmtE(n){return fmt(n)+' €'}
-function fmtK(n){return n>=1000?Math.round(n/1000).toLocaleString('fr-FR')+' k€':fmtE(n)}
-
-// ═══ UI ═══
-const st={sit:'marie',enf:0,age:0,obj:null,rev:0,cre:0,ep:0,liv:0,av:0,aut:0,imm:0,r:null};
-
-// Pills situation
-[{v:'celibataire',l:'Célibataire / Divorcé(e) / Veuf(ve)'},{v:'marie',l:'Marié(e) / Pacsé(e)'}].forEach(s=>{const p=document.createElement('div');p.className='p'+(st.sit===s.v?' on':'');p.textContent=s.l;p.onclick=()=>{document.querySelectorAll('#sit .p').forEach(x=>x.classList.remove('on'));p.classList.add('on');st.sit=s.v;chk1()};document.getElementById('sit').appendChild(p)});
-[0,1,2,3,4].forEach(n=>{const p=document.createElement('div');p.className='p'+(st.enf===n?' on':'');p.textContent=n===4?'4 +':n;p.onclick=()=>{document.querySelectorAll('#enf .p').forEach(x=>x.classList.remove('on'));p.classList.add('on');st.enf=n;chk1()};document.getElementById('enf').appendChild(p)});
-[{v:'fiscalite',l:'Réduire mes impôts'},{v:'retraite',l:'Préparer ma retraite'},{v:'transmission',l:'Préparer ma transmission'},{v:'valoriser',l:'Faire fructifier mon épargne'}].forEach(o=>{const p=document.createElement('div');p.className='p';p.textContent=o.l;p.onclick=()=>{document.querySelectorAll('#obj .p').forEach(x=>x.classList.remove('on'));p.classList.add('on');st.obj=o.v;chk1()};document.getElementById('obj').appendChild(p)});
-
-// Chips helper
-function ch(id,inp,vals,fld,fmt){const r=document.getElementById(id);const el=document.getElementById(inp);vals.forEach(v=>{const b=document.createElement('button');b.className='c';b.textContent=fmt?fmt(v):v.toLocaleString('fr-FR');b.onclick=e=>{e.preventDefault();el.value=v;el.dispatchEvent(new Event('input'))};r.appendChild(b)});el.addEventListener('input',()=>{st[fld]=parseInt(el.value||'0');if(fld==='age')chk1();else chk2()})}
-ch('a-c','age',[30,40,50,60,70],'age');
-ch('r-c','rev',[30000,50000,80000,120000,180000],'rev');
-ch('cr-c','cre',[0,300,800,1500],'cre');
-ch('e-c','ep',[100,300,800,1500,3000],'ep');
-ch('l-c','liv',[0,5000,20000,50000],'liv');
-ch('av-c','av',[0,20000,80000,200000],'av');
-ch('au-c','aut',[0,10000,50000,150000],'aut');
-ch('i-c','imm',[0,150000,400000,800000],'imm');
-
-function chk1(){document.getElementById('b1').disabled=!(st.age>0&&st.obj)}
-function chk2(){document.getElementById('b2').disabled=!(st.rev>0)}
-document.getElementById('b1').onclick=()=>{go(2)};
-document.getElementById('b2').onclick=compute;
-
-function go(n){['s1','s2','s3'].forEach((s,i)=>document.getElementById(s).classList.toggle('hd',i+1!==n));['p1','p2','p3'].forEach((p,i)=>document.getElementById(p).classList.toggle('on',i+1<=n));window.scrollTo({top:0,behavior:'smooth'})}
-
-function compute(){
-  const p=parts(st.sit,st.enf);const pb=st.sit==='marie'?2:1;const fisc=irTmi(st.rev,p,pb);
-  const d={...st,tmi:fisc.tmi,ir:fisc.ir};
-  st.r={fiscal:estimFiscal(d),placement:estimPlac(d),transmission:estimTr(d),tmi:fisc.tmi,ir:fisc.ir};
-  render();go(3);
+function computeIfi(patrimoineImmoNet) {
+  const p = patrimoineImmoNet;
+  if (p < SEUIL_IMPOSITION_IFI) return { redevable: false, montant_ifi: 0, patrimoine_taxable: round(p) };
+  let montant = 0.0;
+  for (const [seuilBas, taux, abattement] of [...BAREME_IFI_2026].reverse()) {
+    if (p >= seuilBas) { montant = p * taux - abattement; break; }
+  }
+  montant = Math.max(0.0, montant);
+  if (p >= 1300000 && p < 1400000) {
+    const decote = 17500 - 0.0125 * p;
+    montant = Math.max(0.0, montant - decote);
+  }
+  return { redevable: true, montant_ifi: round(montant), patrimoine_taxable: round(p) };
 }
+
+function resolveFiscalite(aIn) {
+  const a = Object.assign({}, aIn);
+  const rev = parseFloat(a.revenu_annuel || 0);
+  const situation = a.situation_familiale || "celibataire";
+  const enfants = parseInt(a.enfants || 0);
+  const parts = computePartsFiscales(situation, enfants);
+  const partsBase = (situation === "marie" || situation === "pacse") ? 2.0 : 1.0;
+  const calc = computeIrTmi(rev, parts, partsBase);
+
+  const tmiFourni = a.tmi;
+  const irFourni = a.montant_ir;
+  a.tmi = (tmiFourni !== undefined && tmiFourni !== null) ? parseInt(tmiFourni) : calc.tmi;
+  a.montant_ir = (irFourni !== undefined && irFourni !== null) ? parseFloat(irFourni) : calc.ir;
+  a.fiscalite_calculee = {
+    parts_fiscales: parts, revenu_par_part: calc.revenu_par_part,
+    tmi_calcule: calc.tmi, ir_calcule: calc.ir,
+    tmi_auto: (tmiFourni === undefined || tmiFourni === null),
+    ir_auto: (irFourni === undefined || irFourni === null),
+  };
+  return a;
+}
+
+// ── Capacité d'emprunt ──────────────────────────────────────────────────────
+
+function tauxFraisNotaire(dispositifId) {
+  return DISPOSITIFS_NEUFS.has(dispositifId) ? TAUX_FRAIS_NOTAIRE_NEUF : TAUX_FRAIS_NOTAIRE_ANCIEN;
+}
+
+function annuiteMensuelle(montant, tauxAnnuel = TAUX_CREDIT_ANNUEL, dureeAnnees = DUREE_CREDIT_ANNEES) {
+  const i = tauxAnnuel / 12.0;
+  const n = dureeAnnees * 12;
+  if (i <= 0) return n > 0 ? montant / n : 0.0;
+  return montant * i / (1 - Math.pow(1 + i, -n));
+}
+
+function computeCapaciteEmprunt(a) {
+  const revAnnuel = parseFloat(a.revenu_annuel || 0);
+  const bfAnnuel = parseFloat(a.benefices_fonciers || 0);
+  const mensualitesCredits = parseFloat(a.mensualites_credits || 0);
+  const resPrinc = a.residence_principale || "non";
+  const budgetRp = parseFloat(a.budget_residence_principale || 0);
+
+  const revenuMensuel = revAnnuel / 12.0;
+  const revenusLocatifsMensuels = bfAnnuel / 12.0;
+  const revenusLocatifsPonderes = revenusLocatifsMensuels * PONDERATION_REVENUS_LOCATIFS;
+  const revenuMensuelTotal = revenuMensuel + revenusLocatifsPonderes;
+
+  const mensualiteMax = revenuMensuelTotal * TAUX_ENDETTEMENT_MAX;
+  const mensualiteDisponible = Math.max(0.0, mensualiteMax - mensualitesCredits);
+
+  const i = TAUX_CREDIT_ANNUEL / 12.0;
+  const n = DUREE_CREDIT_ANNEES * 12;
+  let capaciteMontant = (mensualiteDisponible > 0 && i > 0)
+    ? mensualiteDisponible * (1 - Math.pow(1 + i, -n)) / i : 0.0;
+
+  let mensualiteRp = 0.0;
+  let capaciteDisponibleInvestissement = capaciteMontant;
+  if (resPrinc === "non" && budgetRp > 0) {
+    mensualiteRp = annuiteMensuelle(budgetRp);
+    const mensualiteDispoInvestissement = Math.max(0.0, mensualiteDisponible - mensualiteRp);
+    capaciteDisponibleInvestissement = (mensualiteDispoInvestissement > 0 && i > 0)
+      ? mensualiteDispoInvestissement * (1 - Math.pow(1 + i, -n)) / i : 0.0;
+  }
+
+  return {
+    revenu_mensuel: round(revenuMensuel),
+    revenus_locatifs_ponderes: round(revenusLocatifsPonderes),
+    revenu_mensuel_total: round(revenuMensuelTotal),
+    mensualite_max_35: round(mensualiteMax),
+    mensualites_credits: round(mensualitesCredits),
+    mensualite_disponible: round(mensualiteDisponible),
+    taux_indicatif: TAUX_CREDIT_ANNUEL,
+    duree_annees: DUREE_CREDIT_ANNEES,
+    capacite_montant: round(capaciteMontant),
+    budget_residence_principale: round(budgetRp),
+    mensualite_residence_principale: round(mensualiteRp),
+    capacite_disponible_investissement: round(capaciteDisponibleInvestissement),
+    peut_emprunter: capaciteDisponibleInvestissement >= 10000,
+  };
+}
+
+function computeProjetImmo(a, capaciteInfo, dispositifId = "lmnp_ancien") {
+  const capEpargne = parseFloat(a.capacite_epargne || 0);
+  const capaciteMax = parseFloat(capaciteInfo.capacite_disponible_investissement || 0);
+  const tauxFrais = tauxFraisNotaire(dispositifId);
+
+  if (capaciteMax <= 0) {
+    return { montant_projet: 0, montant_emprunte: 0, frais_notaire: 0, taux_frais_notaire: tauxFrais,
+      mensualite_credit: 0, loyer_estime_mensuel: 0, effort_net_mensuel: 0,
+      montant_eligible_travaux_80pct: 0, ajuste: false };
+  }
+
+  const montantProjetMax = capaciteMax / (1 + tauxFrais);
+  const effortNet = (m) => {
+    const montantEmprunte = m * (1 + tauxFrais);
+    const mensualite = annuiteMensuelle(montantEmprunte);
+    const loyerMensuel = m * RENDEMENT_LOCATIF_ESTIME / 12.0;
+    return mensualite - loyerMensuel;
+  };
+  const effortAuMax = effortNet(montantProjetMax);
+
+  let montantFinal, ajuste;
+  if (effortAuMax <= capEpargne || capEpargne <= 0) {
+    montantFinal = montantProjetMax; ajuste = false;
+  } else {
+    let lo = 0.0, hi = montantProjetMax;
+    for (let k = 0; k < 60; k++) {
+      const mid = (lo + hi) / 2;
+      if (effortNet(mid) > capEpargne) hi = mid; else lo = mid;
+    }
+    montantFinal = lo; ajuste = true;
+  }
+
+  const montantEmprunteFinal = montantFinal * (1 + tauxFrais);
+  const mensualiteFinale = annuiteMensuelle(montantEmprunteFinal);
+  const loyerFinal = montantFinal * RENDEMENT_LOCATIF_ESTIME / 12.0;
+  const effortFinal = mensualiteFinale - loyerFinal;
+
+  return {
+    montant_projet: round(montantFinal), montant_emprunte: round(montantEmprunteFinal),
+    frais_notaire: round(montantFinal * tauxFrais), taux_frais_notaire: tauxFrais,
+    mensualite_credit: round(mensualiteFinale), loyer_estime_mensuel: round(loyerFinal),
+    effort_net_mensuel: round(effortFinal),
+    montant_eligible_travaux_80pct: round(montantFinal * RATIO_TRAVAUX_DEFISCALISABLE),
+    ajuste,
+  };
+}
+
+function computeProjetMalrauxMh(a, capaciteInfo) {
+  const ir = parseFloat(a.montant_ir || 0);
+  const capaciteMax = parseFloat(capaciteInfo.capacite_disponible_investissement || 0);
+  const tauxFrais = tauxFraisNotaire("malraux");
+
+  const enveloppeTravaux = ir * MULTIPLE_ENVELOPPE_TRAVAUX_MALRAUX_MH;
+  const montantPiloteParIr = enveloppeTravaux / RATIO_TRAVAUX_DEFISCALISABLE;
+  const montantMaxAvantFrais = capaciteMax > 0 ? capaciteMax / (1 + tauxFrais) : 0.0;
+  const montantFinal = capaciteMax > 0 ? Math.min(montantPiloteParIr, montantMaxAvantFrais) : 0.0;
+
+  if (montantFinal <= 0) {
+    return { montant_projet: 0, montant_emprunte: 0, frais_notaire: 0, taux_frais_notaire: tauxFrais,
+      mensualite_credit: 0, loyer_estime_mensuel: 0, effort_net_mensuel: 0,
+      montant_eligible_travaux_80pct: 0, enveloppe_travaux: round(enveloppeTravaux),
+      ir_annuel: round(ir), plafonne_par_capacite_emprunt: false, ajuste: false };
+  }
+
+  const montantEmprunteFinal = montantFinal * (1 + tauxFrais);
+  const mensualiteFinale = annuiteMensuelle(montantEmprunteFinal);
+  const loyerFinal = montantFinal * RENDEMENT_LOCATIF_ESTIME / 12.0;
+
+  return {
+    montant_projet: round(montantFinal), montant_emprunte: round(montantEmprunteFinal),
+    frais_notaire: round(montantFinal * tauxFrais), taux_frais_notaire: tauxFrais,
+    mensualite_credit: round(mensualiteFinale), loyer_estime_mensuel: round(loyerFinal),
+    effort_net_mensuel: round(mensualiteFinale - loyerFinal),
+    montant_eligible_travaux_80pct: round(montantFinal * RATIO_TRAVAUX_DEFISCALISABLE),
+    enveloppe_travaux: round(enveloppeTravaux), ir_annuel: round(ir),
+    plafonne_par_capacite_emprunt: montantPiloteParIr > montantMaxAvantFrais, ajuste: true,
+  };
+}
+
+function canBorrow(capaciteMontant) { return capaciteMontant >= 10000; }
+
+// ── Arbre de décision immobilier ────────────────────────────────────────────
+
+function immoRecommendations(a) {
+  const tmi = parseInt(a.tmi || 0);
+  const ir = parseFloat(a.montant_ir || 0);
+  const bf = parseFloat(a.benefices_fonciers || 0);
+  const horizon = a.horizon || "moyen";
+  const capEpargne = parseFloat(a.capacite_epargne || 0);
+  const age = parseInt(a.age || 40);
+  let objectifs = a.objectifs_prioritaires || [];
+  if (typeof objectifs === "string") objectifs = [objectifs];
+  const hasTransmission = objectifs.includes("transmission") || objectifs.includes("revenus_compl");
+
+  const capacite = computeCapaciteEmprunt(a);
+  const capEmpruntMontant = capacite.capacite_disponible_investissement;
+
+  if (!canBorrow(capEmpruntMontant)) return [];
+
+  const resPrinc = a.residence_principale || "non";
+  if (resPrinc === "non") return [];
+
+  const prioriteImmoLevier = (capEmpruntMontant >= 140000 && age < 53 && capEpargne > 500);
+  const marcheMalrauxMhDisponible = capEmpruntMontant >= SEUIL_MARCHE_MALRAUX_MH;
+  const projetMalrauxMh = computeProjetMalrauxMh(a, capacite);
+  const projetsCache = {};
+
+  function reco(prodId, stars, why) {
+    let proj;
+    if (prodId === "malraux" || prodId === "monuments_historiques") {
+      proj = projetMalrauxMh;
+    } else {
+      if (!(prodId in projetsCache)) projetsCache[prodId] = computeProjetImmo(a, capacite, prodId);
+      proj = projetsCache[prodId];
+    }
+    return [{ id: prodId, label: PRODUIT_LABELS[prodId] || prodId, stars, rationale: why,
+      levier: prioriteImmoLevier, projet: proj }];
+  }
+
+  if (ir < 2500) {
+    if (hasTransmission || horizon === "tres_long") {
+      return reco("lmnp_ancien", 5, "Peu ou pas d'IR, objectif revenus/transmission : LMNP Ancien.");
+    }
+    return reco("immo_rendement_ancien", 4, "Peu ou pas d'IR : immobilier de rendement.");
+  }
+
+  if (bf > 6000 && tmi >= 30) {
+    return reco("deficit_foncier", 5, `Bénéfices fonciers ${Math.round(bf)} €/an > 6 000 € et TMI ${tmi} % : Déficit foncier.`);
+  }
+
+  if (ir > 20000 && tmi >= 41 && marcheMalrauxMhDisponible) {
+    return reco("monuments_historiques", 5, `IR ${Math.round(ir)} € et TMI ${tmi} % : Monuments Historiques.`);
+  }
+
+  if (ir > 9000 && marcheMalrauxMhDisponible) {
+    return reco("malraux", 5, `IR ${Math.round(ir)} € : Malraux.`);
+  }
+
+  if (ir > 9000 && !marcheMalrauxMhDisponible) {
+    if (tmi >= 30) return reco("lmnp_para_hotelier", 4, `IR ${Math.round(ir)} € mais capacité < 130 000 € : LMNP Para-Hôtelier.`);
+    return reco("lmnp_ancien", 4, `IR ${Math.round(ir)} € mais capacité < 130 000 € : LMNP Ancien.`);
+  }
+
+  if (ir >= 2500 && ir <= 9000) {
+    return reco("denormandie", 4, `IR ${Math.round(ir)} € : Denormandie.`);
+  }
+
+  if (horizon === "tres_long" && tmi >= 30) {
+    return reco("lmnp_para_hotelier", 4, `Horizon > 20 ans et TMI ${tmi} % : LMNP Para-Hôtelier.`);
+  }
+
+  if ((horizon === "long" || horizon === "tres_long") && tmi >= 30) {
+    return reco("lmnp_ancien", 4, `Horizon ≥ 15 ans et TMI ${tmi} % : LMNP Ancien.`);
+  }
+
+  return [];
+}
+
+// ── Économie fiscale annuelle (avec correctif de cohérence) ────────────────
+
+const _DUREE_DISPOSITIF_ENGAGEMENT_MIN = {
+  malraux: 4, monuments_historiques: 4, denormandie: 6, deficit_foncier: 3,
+};
+
+function computeTaxSavings(a) {
+  const tmi = parseInt(a.tmi || 0);
+  const rev = parseFloat(a.revenu_annuel || 0);
+  const capEpargne = parseFloat(a.capacite_epargne || 0);
+  const ir = parseFloat(a.montant_ir || 0);
+  const bf = parseFloat(a.benefices_fonciers || 0);
+
+  const capaciteInfo = computeCapaciteEmprunt(a);
+  const capDisponible = capaciteInfo.capacite_disponible_investissement;
+  const peutEmprunter = canBorrow(capDisponible);
+  const marcheMalrauxMhDisponible = capDisponible >= SEUIL_MARCHE_MALRAUX_MH;
+
+  const projet = peutEmprunter ? computeProjetImmo(a, capaciteInfo) : null;
+  const montantTravaux80 = projet ? projet.montant_eligible_travaux_80pct : 0;
+
+  const projetMalrauxMh = peutEmprunter ? computeProjetMalrauxMh(a, capaciteInfo) : null;
+  const montantTravaux80MalrauxMh = projetMalrauxMh ? projetMalrauxMh.montant_eligible_travaux_80pct : 0;
+
+  const sources = [];
+  let total = 0.0;
+
+  // 1) PER : uniquement si TMI ≥ 30 % et capacité d'épargne ≥ 100 €/mois
+  if (tmi >= 30 && capEpargne >= 100) {
+    const versementPer = Math.min(rev * 0.10, Math.max(capEpargne * 12, 2000), 35000);
+    const ecoPer = versementPer * (tmi / 100.0);
+    if (ecoPer > 0) {
+      sources.push({ label: "Versement PER", amount: round(ecoPer) });
+      total += ecoPer;
+    }
+  }
+
+  // 2) Dispositifs immobiliers — si imposable et capacité d'emprunt
+  if (peutEmprunter) {
+    if (ir >= 2500 && ir < 9000) {
+      const eco = Math.min(ir * 0.6, 4000);
+      sources.push({ label: "Investissement Denormandie", amount: round(eco) });
+      total += eco;
+    } else if (ir >= 9000 && tmi >= 30 && marcheMalrauxMhDisponible) {
+      const assietteAnnuelle = montantTravaux80MalrauxMh / DUREE_MALRAUX_AVEC_PROROGATION;
+      const eco = Math.min(assietteAnnuelle * TAUX_MALRAUX, ir);
+      sources.push({ label: "Investissement Malraux", amount: round(eco) });
+      total += eco;
+    }
+    if (ir >= 20000 && tmi >= 41 && marcheMalrauxMhDisponible) {
+      const assietteAnnuelle = montantTravaux80MalrauxMh / 4;
+      const eco = Math.min(assietteAnnuelle * (tmi / 100.0), ir);
+      sources.push({ label: "Monuments Historiques", amount: round(eco) });
+      total += eco;
+    }
+    if (bf > 6000 && tmi >= 30) {
+      const plafondTravauxAnnuel = montantTravaux80 > 0 ? Math.min(10700, montantTravaux80) : 10700;
+      const eco = (tmi + 17.2) / 100 * plafondTravauxAnnuel;
+      sources.push({ label: "Déficit foncier", amount: round(eco) });
+      total += eco;
+    }
+  }
+
+  return { total_annual: round(total), sources };
+}
+
+// ── Plan d'affectation de l'épargne (surplus après précaution) ─────────────
+
+function repartirSurplusTransmission(restant, a) {
+  // Version simplifiée pour le simulateur public : le détail des lignes de
+  // cascade (produits successifs) n'est pas affiché dans le teaser — seul
+  // le montant total du surplus disponible est utilisé pour le contrat de
+  // capitalisation démembré. On retourne une liste vide ici volontairement.
+  return [];
+}
+
+function computePlanAffectationEpargne(a) {
+  const rev = parseFloat(a.revenu_annuel || 0);
+  const tmi = parseInt(a.tmi || 0);
+  const ir = parseFloat(a.montant_ir || 0);
+  const epargnePrec = parseFloat(a.epargne_precaution || 0);
+  const risque = a.tolerance_risque || "equilibre";
+
+  const seuilPrec = (rev / 12.0) * 3.0;
+  const surplus = Math.max(0.0, epargnePrec - seuilPrec);
+
+  if (surplus <= 0) {
+    return { epargne_precaution_cible: round(seuilPrec), epargne_precaution_actuelle: round(epargnePrec),
+      surplus_a_affecter: 0, besoin_fiscal: false, lignes: [], commentaire: "" };
+  }
+
+  let restant = surplus;
+  const lignes = [];
+  const besoinFiscal = tmi >= 30 && ir > 0;
+
+  if (besoinFiscal) {
+    const plafondPer = Math.max(rev * PLAFOND_PER_PCT_REVENU, PLAFOND_PER_MIN);
+    const versementPerCible = Math.min(rev * MULTIPLE_PER_BESOIN_FISCAL, plafondPer, restant);
+    if (versementPerCible > 0) {
+      lignes.push({ produit: "per", label: PRODUIT_LABELS.per, montant: round(versementPerCible) });
+      restant -= versementPerCible;
+    }
+    if (restant > 0 && versementPerCible >= plafondPer - 1 && risque === "offensif") {
+      let versementSoficaCible = Math.min(restant, 18000 * 0.48 / 0.30);
+      versementSoficaCible = Math.min(versementSoficaCible, restant * 0.5);
+      if (versementSoficaCible > 500) {
+        lignes.push({ produit: "sofica", label: PRODUIT_LABELS.sofica, montant: round(versementSoficaCible) });
+        restant -= versementSoficaCible;
+      }
+    }
+  }
+
+  return {
+    epargne_precaution_cible: round(seuilPrec), epargne_precaution_actuelle: round(epargnePrec),
+    surplus_a_affecter: round(surplus), besoin_fiscal: besoinFiscal, lignes,
+    restant_apres_lignes: round(restant),
+  };
+}
+
+// ── Démembrement (bien détenu) ──────────────────────────────────────────────
+
+function valeurNuePropretePct(age) {
+  if (age < 21) return 0.10;
+  if (age < 31) return 0.20;
+  if (age < 41) return 0.30;
+  if (age < 51) return 0.40;
+  if (age < 61) return 0.50;
+  if (age < 71) return 0.60;
+  return 0.70;
+}
+
+function computeDemembrementReco(a) {
+  const age = parseInt(a.age || 40);
+  const patFin = parseFloat(a.patrimoine_financier || 0);
+  const patImmo = parseFloat(a.patrimoine_immo || 0);
+  let objectifs = a.objectifs_prioritaires || [];
+  if (typeof objectifs === "string") objectifs = [objectifs];
+
+  if (!objectifs.includes("transmission")) return null;
+  if (age >= AGE_MAX_DEMEMBREMENT_INTERESSANT) return null;
+  if (patImmo < SEUIL_PATRIMOINE_IMMO_DEMEMBREMENT) return null;
+
+  const totalPatrimoine = patFin + patImmo;
+  if (totalPatrimoine <= 0) return null;
+
+  const ratioImmo = patImmo / totalPatrimoine;
+  if (ratioImmo < SEUIL_RATIO_IMMO_TRANSMISSION) return null;
+
+  const valeurNpPct = valeurNuePropretePct(age);
+  const baseTaxableIndicative = patImmo * valeurNpPct;
+
+  return {
+    id: "demembrement", label: "Démembrement (donation de la nue-propriété)", stars: 5,
+    valeur_bien_indicative: round(patImmo), valeur_nue_propriete_pct: valeurNpPct,
+    base_taxable_indicative: round(baseTaxableIndicative), ratio_immo_patrimoine: Math.round(ratioImmo * 1000) / 10,
+  };
+}
+
+// ── Contrat de capitalisation démembré ──────────────────────────────────────
+
+function computeCapiDemembreReco(a, planEpargne) {
+  const age = parseInt(a.age || 40);
+  const enfants = parseInt(a.enfants || 0);
+  let objectifs = a.objectifs_prioritaires || [];
+  if (typeof objectifs === "string") objectifs = [objectifs];
+
+  if (!objectifs.includes("transmission")) return null;
+  if (enfants <= 0) return null;
+
+  const surplus = parseFloat(planEpargne.surplus_a_affecter || 0);
+  if (surplus <= SEUIL_LIQUIDITES_CAPI_DEMEMBRE) return null;
+
+  const montantExcedent = surplus - SEUIL_LIQUIDITES_CAPI_DEMEMBRE;
+  const valeurNpPct = valeurNuePropretePct(age);
+  const baseTaxableNp = montantExcedent * valeurNpPct;
+
+  const montantDejaDonne = parseFloat(a.montant_donations_effectuees || 0);
+  const abattementDisponibleParEnfant = Math.max(0.0, ABATTEMENT_DONATION_LIGNE_DIRECTE - montantDejaDonne);
+  const abattementTotalDisponible = abattementDisponibleParEnfant * enfants;
+  const baseTaxableApresAbattement = Math.max(0.0, baseTaxableNp - abattementTotalDisponible);
+
+  return {
+    id: "cap_demembre", label: PRODUIT_LABELS.cap_demembre, stars: 4,
+    montant_excedent: round(montantExcedent), valeur_nue_propriete_pct: valeurNpPct,
+    base_taxable_avant_abattement: round(baseTaxableNp),
+    abattement_disponible_par_enfant: round(abattementDisponibleParEnfant),
+    abattement_total_disponible: round(abattementTotalDisponible),
+    base_taxable_apres_abattement: round(baseTaxableApresAbattement),
+  };
+}
+
+// ── Assurance-vie luxembourgeoise ───────────────────────────────────────────
+
+function computeAvLuxembourgReco(a) {
+  const patFin = parseFloat(a.patrimoine_financier || 0);
+  const epargnePrec = parseFloat(a.epargne_precaution || 0);
+  const patrimoineDisponible = Math.max(0.0, patFin - epargnePrec);
+
+  if (patrimoineDisponible < SEUIL_AV_LUXEMBOURG) return null;
+  const premium = patrimoineDisponible >= SEUIL_AV_LUXEMBOURG_PREMIUM;
+
+  return {
+    id: "av_luxembourg", label: PRODUIT_LABELS.av_luxembourg, stars: 3,
+    patrimoine_disponible: round(patrimoineDisponible), seuil_pertinence: SEUIL_AV_LUXEMBOURG, premium,
+  };
+}
+
+// ── Vente immobilier locatif → réinvestissement AV ──────────────────────────
+
+function computeVenteImmoLocatifReco(a) {
+  const detenus = a.produits_detenus || [];
+  if (!detenus.includes("locatif")) return null;
+
+  const montantLocatif = parseFloat(a.montant_locatif || 0);
+  if (montantLocatif < 50000) return null;
+
+  const age = parseInt(a.age || 40);
+  if (age >= 70) return null;
+
+  let objectifs = a.objectifs_prioritaires || [];
+  if (typeof objectifs === "string") objectifs = [objectifs];
+  if (!objectifs.includes("transmission")) return null;
+
+  const enfants = parseInt(a.enfants || 0);
+  const nbBeneficiaires = Math.max(1, enfants);
+  const plafondAv = ABATTEMENT_AV_DECES_PAR_BENEFICIAIRE * nbBeneficiaires;
+  const montantAvActuel = parseFloat(a.montant_av || 0);
+  const plafondRestant = Math.max(0.0, plafondAv - montantAvActuel);
+
+  if (plafondRestant < 10000) return null;
+
+  const capitalAReinvestir = Math.min(montantLocatif, plafondRestant);
+  const droitsEconomises = round(_calculeDroitsSuccession(capitalAReinvestir / nbBeneficiaires) * nbBeneficiaires);
+  const bf = parseFloat(a.benefices_fonciers || 0);
+  const revenuAvEstime = capitalAReinvestir * 0.04;
+  const rendementLocatifBrut = montantLocatif > 0 ? bf / montantLocatif : 0;
+
+  return {
+    id: "vente_immo_locatif_av", label: "Réorientation immobilier locatif → Assurance-vie", stars: 4,
+    montant_locatif: round(montantLocatif), plafond_av_restant: round(plafondRestant),
+    capital_a_reinvestir: round(capitalAReinvestir), droits_economises: droitsEconomises,
+    revenu_av_estime: round(revenuAvEstime), rendement_locatif_brut_pct: Math.round(rendementLocatifBrut * 1000) / 10,
+  };
+}
+
+// ── Droits de succession ────────────────────────────────────────────────────
+
+function _calculeDroitsSuccession(baseTaxable) {
+  if (baseTaxable <= 0) return 0.0;
+  let droits = 0.0;
+  for (const [seuil, taux, decote] of BAREME_DROITS_SUCCESSION_LIGNE_DIRECTE) {
+    if (baseTaxable >= seuil) droits = baseTaxable * taux - decote;
+    else break;
+  }
+  return Math.max(0.0, droits);
+}
+
+function droitsAvEconomises(patFin, montantAv, enfants, age) {
+  const nbBeneficiaires = Math.max(1, enfants);
+  let plafondAv = ABATTEMENT_AV_DECES_PAR_BENEFICIAIRE * nbBeneficiaires;
+  if (age >= 70) plafondAv = 30500;
+
+  const potentielRestant = Math.max(0.0, plafondAv - montantAv);
+  if (potentielRestant <= 0) {
+    return { plafond_av: round(plafondAv), av_actuelle: round(montantAv), potentiel_restant: 0,
+      droits_economises: 0, base_optimisable: 0 };
+  }
+
+  const abattementTotalLd = ABATTEMENT_DONATION_LIGNE_DIRECTE * nbBeneficiaires;
+  const baseTaxableActuelle = Math.max(0.0, patFin - abattementTotalLd);
+  const baseTaxableOptimisee = Math.max(0.0, baseTaxableActuelle - potentielRestant);
+
+  const droitsAvant = _calculeDroitsSuccession(baseTaxableActuelle / nbBeneficiaires) * nbBeneficiaires;
+  const droitsApres = _calculeDroitsSuccession(baseTaxableOptimisee / nbBeneficiaires) * nbBeneficiaires;
+
+  return {
+    plafond_av: round(plafondAv), av_actuelle: round(montantAv), potentiel_restant: round(potentielRestant),
+    droits_economises: round(Math.max(0.0, droitsAvant - droitsApres)), base_optimisable: round(potentielRestant),
+  };
+}
+
+// ── compute_recommendations (orchestrateur principal) ───────────────────────
+
+const PRIORITE_LABELS = {
+  epargne_precaution: "Constituer une épargne de précaution", retraite: "Préparer la retraite",
+  fiscalite: "Optimiser la fiscalité", immobilier: "Diversifier dans l'immobilier",
+  transmission: "Anticiper la transmission", prevoyance: "Renforcer la prévoyance familiale",
+  investissement_lt: "Faire fructifier le capital sur le long terme", dette: "Maîtriser l'endettement",
+};
+const PRIORITE_DESC = {
+  epargne_precaution: "Sécuriser 3 à 6 mois de dépenses sur livrets liquides avant toute autre démarche.",
+  retraite: "Compenser la baisse de revenus prévisible et capitaliser sur l'effet du temps.",
+  fiscalite: "Activer les leviers de déduction et d'enveloppes défiscalisées adaptés à votre TMI.",
+  immobilier: "Profiter de l'effet de levier et générer des revenus complémentaires.",
+  transmission: "Préparer la donation et l'optimisation successorale en amont.",
+  prevoyance: "Protéger votre famille des aléas (décès, invalidité, perte de revenus).",
+  investissement_lt: "Construire un patrimoine financier diversifié et performant sur 10+ ans.",
+  dette: "Réduire la charge d'intérêts pour libérer de la capacité d'épargne.",
+};
+
+function computeRecommendations(aIn) {
+  const a = resolveFiscalite(aIn);
+
+  const age = parseInt(a.age || 40);
+  const tmi = parseInt(a.tmi || 0);
+  const rev = parseFloat(a.revenu_annuel || 0);
+  const capEpargne = parseFloat(a.capacite_epargne || 0);
+  const epargnePrec = parseFloat(a.epargne_precaution || 0);
+  const patFin = parseFloat(a.patrimoine_financier || 0);
+  const patImmo = parseFloat(a.patrimoine_immo || 0);
+  const resPrinc = a.residence_principale || "non";
+  const mensualitesCredits = parseFloat(a.mensualites_credits || 0);
+  const horizon = a.horizon || "moyen";
+  const risque = a.tolerance_risque || "equilibre";
+  const retraitePrep = a.retraite_preparee || "aucune";
+  const prevoyance = a.prevoyance || "aucune";
+  const donation = a.donation || "non";
+  const ifiDeclare = (a.ifi !== undefined && a.ifi !== null) ? a.ifi : null;
+  const detenus = a.produits_detenus || [];
+  const enfants = parseInt(a.enfants || 0);
+  let objectifs = a.objectifs_prioritaires || [];
+  if (typeof objectifs === "string") objectifs = [objectifs];
+  const ir = parseFloat(a.montant_ir || 0);
+
+  const ifiInfo = computeIfi(patImmo);
+  const ifi = ifiDeclare !== null ? ifiDeclare : (ifiInfo.redevable ? "oui" : "non");
+
+  const capaciteInfo = computeCapaciteEmprunt(a);
+  const capEmpruntMontant = capaciteInfo.capacite_disponible_investissement;
+  const peutEmprunter = canBorrow(capEmpruntMontant);
+
+  const prioriteImmoLevier = (capEmpruntMontant >= 140000 && age < 53 && capEpargne > 500 && peutEmprunter);
+
+  const hasAv = detenus.includes("av");
+  const hasPer = detenus.includes("per");
+  const montantAvExistant = parseFloat(a.montant_av || 0);
+
+  const seuilPrec = (rev / 12.0) * 3.0;
+  const precautionOk = epargnePrec >= seuilPrec;
+  const moyenTermeOk = hasAv && montantAvExistant > 0;
+  const baseSecurisee = precautionOk && moyenTermeOk;
+
+  const s = {};
+  const setp = (k, v) => { s[k] = Math.max(s[k] || 0, v); };
+
+  if (ir <= 3000 || tmi < 30) {
+    setp("assurance_vie", 5);
+  } else {
+    setp("assurance_vie", 4);
+  }
+  if (objectifs.includes("transmission") || objectifs.includes("valoriser") || patFin > 50000 || age > 50) {
+    setp("assurance_vie", 5);
+  }
+
+  if (tmi >= 30 && capEpargne >= 100) {
+    setp("per", 5);
+  }
+
+  if (!peutEmprunter) {
+    if (tmi < 30 && ir > 0) { setp("sofica", 3); setp("fip_fcpi", 3); }
+  }
+
+  if (risque === "offensif" && (horizon === "long" || horizon === "tres_long")) {
+    setp("pea", 5);
+  } else if (risque === "offensif") {
+    setp("pea", 4);
+  }
+
+  setp("scpi", 2);
+  if (patFin > 30000 && (horizon === "long" || horizon === "tres_long")) setp("scpi", 4);
+  if (objectifs.includes("immobilier") || objectifs.includes("revenus_compl")) setp("scpi", 4);
+
+  setp("livret_a", epargnePrec < seuilPrec ? 5 : 2);
+
+  if (patFin > 150000 || detenus.includes("pea")) setp("cto", 4); else setp("cto", 2);
+
+  if (patFin > 250000 || ifi === "oui" || ifi === "proche") setp("cap", 4);
+  if (objectifs.includes("transmission") && patFin > 200000) setp("cap", 5);
+
+  if (objectifs.includes("transmission") && tmi >= 30) setp("scpi_nue_propriete", 4);
+
+  let immoRecos = immoRecommendations(a);
+  // (enrichissement du rationale omis : non affiché dans le teaser public)
+
+  if (immoRecos.length && !baseSecurisee) {
+    immoRecos = immoRecos.map(r => ({ ...r, stars: Math.max(1, r.stars - 2), etape_suivante: true, levier: false }));
+  }
+
+  const baseRecos = Object.entries(s)
+    .map(([k, v]) => ({ id: k, label: PRODUIT_LABELS[k] || k, stars: v }))
+    .sort((x, y) => y.stars - x.stars);
+
+  const byId = {};
+  baseRecos.forEach(r => { byId[r.id] = r; });
+  immoRecos.forEach(r => {
+    if (byId[r.id]) {
+      byId[r.id].stars = r.etape_suivante ? r.stars : Math.max(byId[r.id].stars, r.stars);
+      byId[r.id].levier = r.levier || false;
+      byId[r.id].etape_suivante = r.etape_suivante || false;
+    } else {
+      byId[r.id] = r;
+    }
+  });
+
+  let recosFinal = Object.values(byId).sort((x, y) => y.stars - x.stars);
+
+  if (prioriteImmoLevier && immoRecos.length && baseSecurisee) {
+    const immoId = immoRecos[0].id;
+    recosFinal = [
+      ...recosFinal.filter(r => r.id === immoId),
+      ...recosFinal.filter(r => r.id !== immoId),
+    ];
+  }
+
+  // ── Priorités ──
+  const pScores = {}; Object.keys(PRIORITE_LABELS).forEach(k => pScores[k] = 0.0);
+
+  pScores.epargne_precaution = epargnePrec < seuilPrec ? (10 - (epargnePrec / Math.max(seuilPrec, 1)) * 8) : 1;
+
+  let baseRet = { aucune: 9, faible: 7, moyenne: 4, bonne: 2 }[retraitePrep] ?? 5;
+  if (age >= 45) baseRet += 1.5;
+  if (objectifs.includes("retraite")) baseRet += 2;
+  pScores.retraite = Math.min(10, baseRet);
+
+  let fisc = { 0: 1, 11: 4, 30: 7, 41: 9, 45: 9 }[tmi] ?? 1;
+  if (objectifs.includes("fiscalite")) fisc += 1.5;
+  pScores.fiscalite = Math.min(10, fisc);
+
+  let pIm = 3;
+  if (patImmo === 0 && resPrinc === "non") pIm = 7;
+  if (objectifs.includes("immobilier")) pIm = 9;
+  if (tmi >= 30 && patImmo < 100000) pIm += 1;
+  pScores.immobilier = Math.min(10, pIm);
+
+  let pTr = 2;
+  if ((patFin + patImmo) > 500000) pTr = 6;
+  if ((patFin + patImmo) > 1300000 || ifi !== "non") pTr = 9;
+  if ((donation === "non" || donation === "reflexion") && (patFin + patImmo) > 300000) pTr = Math.max(pTr, 6);
+  if (objectifs.includes("transmission")) pTr = Math.max(pTr, 9);
+  if (enfants >= 1 && (patFin + patImmo) > 200000) pTr += 1;
+  pScores.transmission = Math.min(10, pTr);
+
+  let pPv = { aucune: 8, employeur: 6, individuelle: 3, complet: 2 }[prevoyance] ?? 4;
+  if (enfants >= 1 && (prevoyance === "aucune" || prevoyance === "employeur")) pPv = Math.min(10, pPv + 2);
+  if (objectifs.includes("proteger")) pPv = Math.min(10, pPv + 1);
+  pScores.prevoyance = pPv;
+
+  let pLt = 4;
+  if (capEpargne >= 500 && (horizon === "long" || horizon === "tres_long")) pLt = 7;
+  if (patFin < 20000 && capEpargne >= 300) pLt += 1;
+  if (objectifs.includes("valoriser") || objectifs.includes("revenus_compl")) pLt = Math.max(pLt, 7);
+  pScores.investissement_lt = Math.min(10, pLt);
+
+  const revenuMensuel = rev / 12.0;
+  const tauxEndettement = revenuMensuel > 0 ? (mensualitesCredits / revenuMensuel) : 0;
+  pScores.dette = tauxEndettement > 0.35 ? 8 : (tauxEndettement > 0.20 ? 5 : 1);
+
+  const mappingObjPriorite = {
+    retraite: "retraite", fiscalite: "fiscalite", immobilier: "immobilier", transmission: "transmission",
+    proteger: "prevoyance", valoriser: "investissement_lt", revenus_compl: "investissement_lt",
+  };
+  objectifs.slice(0, 3).forEach((obj, i) => {
+    const target = mappingObjPriorite[obj];
+    if (target) {
+      const boost = [2.5, 1.5, 0.8][i];
+      pScores[target] = Math.min(10, pScores[target] + boost);
+    }
+  });
+
+  const top = Object.entries(pScores).sort((x, y) => y[1] - x[1]).slice(0, 5);
+  const priorites = top.map(([k, v], i) => ({
+    id: k, label: PRIORITE_LABELS[k], description: PRIORITE_DESC[k], intensity: Math.round(v * 10) / 10, rank: i + 1,
+  }));
+
+  // ── Score patrimonial ──
+  let score = 50;
+  if (epargnePrec >= seuilPrec) score += 8; else if (epargnePrec >= seuilPrec * 0.5) score += 3; else score -= 8;
+  score += { aucune: -10, faible: -3, moyenne: 5, bonne: 12 }[retraitePrep] ?? 0;
+  const nbProd = detenus.filter(d => d !== "aucun").length;
+  score += Math.min(10, nbProd * 2);
+  const seuilPat = Math.max(1, age - 25) * 8000;
+  const totalPat = patFin + patImmo;
+  if (totalPat > seuilPat * 2) score += 12; else if (totalPat > seuilPat) score += 6; else if (totalPat < seuilPat * 0.3) score -= 6;
+  if (rev > 0) {
+    const taux = (capEpargne * 12) / rev;
+    if (taux >= 0.15) score += 8; else if (taux >= 0.08) score += 4; else if (taux < 0.02) score -= 4;
+  }
+  score += { aucune: -6, employeur: 0, individuelle: 4, complet: 6 }[prevoyance] ?? 0;
+  if (tauxEndettement > 0.35) score -= 8;
+  if (tmi >= 30 && !detenus.includes("per")) score -= 4;
+  score += { non: -2, en_cours: 2, oui: 5 }[resPrinc] ?? 0;
+  score = Math.max(5, Math.min(100, score));
+
+  const forces = [], faiblesses = [];
+  if (epargnePrec >= seuilPrec) forces.push("Épargne de précaution suffisante"); else faiblesses.push("Épargne de précaution insuffisante");
+  if (retraitePrep === "moyenne" || retraitePrep === "bonne") forces.push("Retraite déjà anticipée"); else faiblesses.push("Retraite peu ou pas préparée");
+  if (nbProd >= 3) forces.push("Patrimoine financier diversifié"); else if (nbProd <= 1) faiblesses.push("Faible diversification");
+  if (prevoyance === "individuelle" || prevoyance === "complet") forces.push("Prévoyance solide"); else if (prevoyance === "aucune") faiblesses.push("Absence de prévoyance");
+  if (tmi >= 30 && detenus.includes("per")) forces.push("Levier fiscal PER activé");
+  if (tauxEndettement > 0.35) faiblesses.push("Endettement élevé");
+
+  const saving = computeTaxSavings(a);
+  const planEpargne = computePlanAffectationEpargne(a);
+  const demembrement = computeDemembrementReco(a);
+  const capDemembre = computeCapiDemembreReco(a, planEpargne);
+  const avLuxembourg = computeAvLuxembourgReco(a);
+  const venteLocatif = computeVenteImmoLocatifReco(a);
+
+  const extras = [demembrement, capDemembre, avLuxembourg, venteLocatif].filter(Boolean);
+  let recosTop = recosFinal.slice(0, 10);
+  if (extras.length) recosTop = [...recosFinal.slice(0, 10 - extras.length), ...extras];
+
+  const avDroitsEco = droitsAvEconomises(patFin, parseFloat(a.montant_av || 0), enfants, age);
+
+  return {
+    score: Math.round(score), priorites, recommandations: recosTop, forces, faiblesses,
+    tax_savings: saving, capacite_emprunt: capaciteInfo, plan_affectation_epargne: planEpargne,
+    demembrement, cap_demembre: capDemembre, av_luxembourg: avLuxembourg,
+    av_droits_economises: avDroitsEco, fiscalite_calculee: a.fiscalite_calculee || {},
+    ifi_calcule: ifiInfo,
+  };
+}
+
+// ── Teaser public (aucun nom de dispositif) ─────────────────────────────────
+
+const DUREE_ENGAGEMENT_ANNEES = {
+  malraux: 9, monuments_historiques: 15, deficit_foncier: 10, denormandie: 12,
+  lmnp_ancien: 15, lmnp_para_hotelier: 15, lmnp_neuf: 15,
+  immo_rendement_ancien: 15, immo_rendement_neuf: 15, scpi_nue_propriete: 15,
+};
+const DUREE_GENERIQUE_PLACEMENT = 15;
+
+const _LABEL_SOURCE_TO_ID = {
+  "Investissement Denormandie": "denormandie", "Investissement Malraux": "malraux",
+  "Monuments Historiques": "monuments_historiques", "Déficit foncier": "deficit_foncier",
+};
+
+function _dureeEtType(result) {
+  const recos = result.recommandations || [];
+  const top = recos[0];
+  if (top && DUREE_ENGAGEMENT_ANNEES[top.id] !== undefined) {
+    return { duree_annees: DUREE_ENGAGEMENT_ANNEES[top.id], type: "immobilier" };
+  }
+  return { duree_annees: DUREE_GENERIQUE_PLACEMENT, type: "placement" };
+}
+
+function _economieAnnuelleCoherente(result) {
+  const idsRecommandes = new Set((result.recommandations || []).map(r => r.id));
+  const sources = (result.tax_savings || {}).sources || [];
+  let total = 0;
+  for (const src of sources) {
+    const dispositifId = _LABEL_SOURCE_TO_ID[src.label];
+    if (dispositifId !== undefined && !idsRecommandes.has(dispositifId)) continue;
+    total += src.amount || 0;
+  }
+  return round(total);
+}
+
+function _economieSuccessionDelta(result, a) {
+  const enfants = Math.max(1, parseInt(a.enfants || 0));
+  const abattementTotal = ABATTEMENT_DONATION_LIGNE_DIRECTE * enfants;
+
+  const demembrement = result.demembrement;
+  if (demembrement) {
+    const valeurPleine = demembrement.valeur_bien_indicative || 0;
+    const valeurNp = demembrement.base_taxable_indicative || 0;
+    const baseAvant = Math.max(0.0, valeurPleine - abattementTotal);
+    const baseApres = Math.max(0.0, valeurNp - abattementTotal);
+    const droitsAvant = _calculeDroitsSuccession(baseAvant / enfants) * enfants;
+    const droitsApres = _calculeDroitsSuccession(baseApres / enfants) * enfants;
+    return round(Math.max(0.0, droitsAvant - droitsApres));
+  }
+
+  const capDemembre = result.cap_demembre;
+  if (capDemembre) {
+    const montantExcedent = capDemembre.montant_excedent || 0;
+    const abattementTotalDispo = capDemembre.abattement_total_disponible || 0;
+    const baseAvant = Math.max(0.0, montantExcedent - abattementTotalDispo);
+    const baseApres = capDemembre.base_taxable_apres_abattement || 0;
+    const droitsAvant = _calculeDroitsSuccession(baseAvant);
+    const droitsApres = _calculeDroitsSuccession(baseApres);
+    return round(Math.max(0.0, droitsAvant - droitsApres));
+  }
+
+  // Vente immobilier locatif → AV : delta déjà chiffré directement par la fonction
+  const venteLocatif = (result.recommandations || []).find(r => r.id === "vente_immo_locatif_av");
+  if (venteLocatif && venteLocatif.droits_economises > 0) {
+    return round(venteLocatif.droits_economises);
+  }
+
+  const avInfo = result.av_droits_economises;
+  if (avInfo && avInfo.droits_economises > 0) {
+    return round(avInfo.droits_economises);
+  }
+
+  return 0;
+}
+
+function buildTeaserSimulateur(a) {
+  const result = computeRecommendations(a);
+
+  const dureeInfo = _dureeEtType(result);
+  const dureeAnnees = dureeInfo.duree_annees;
+
+  const economieAnnuelle = _economieAnnuelleCoherente(result);
+  const economieFiscaleCumulee = round(economieAnnuelle * dureeAnnees);
+
+  const economieSuccession = _economieSuccessionDelta(result, a);
+  const totalCumule = economieFiscaleCumulee + economieSuccession;
+
+  const fmt = (n) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ");
+  const montantCumuleFmt = fmt(economieFiscaleCumulee);
+  const montantSuccessionFmt = fmt(economieSuccession);
+
+  let message;
+  if (dureeInfo.type === "immobilier") {
+    message = `Sur la base des informations saisies, une solution immobilière et une meilleure structuration patrimoniale pourraient générer un gain fiscal cumulé de l'ordre de ${montantCumuleFmt} € sur ${dureeAnnees} ans.`;
+  } else {
+    message = `Sur la base des informations saisies, une meilleure optimisation patrimoniale pourrait générer un gain fiscal cumulé de l'ordre de ${montantCumuleFmt} € sur ${dureeAnnees} ans.`;
+  }
+  if (economieSuccession > 0) {
+    message += ` À cela s'ajoute une réduction potentielle des droits de succession estimée à ${montantSuccessionFmt} €.`;
+  }
+
+  return {
+    score: result.score,
+    duree_annees: dureeAnnees,
+    economie_fiscale_annuelle_estimee: economieAnnuelle,
+    economie_fiscale_cumulee_estimee: economieFiscaleCumulee,
+    economie_succession_estimee: economieSuccession,
+    total_gains_cumules_estimes: round(totalCumule),
+    message,
+    mention_legale: "Ces estimations sont fournies à titre indicatif sur la base des informations saisies et ne constituent pas une garantie de résultat. Un rendez-vous avec un conseiller est nécessaire pour affiner ces montants.",
+  };
+}
+
+
+// ════════════════════════════════════════════════════════════════════════
+// QUESTIONNAIRE & INTERFACE
+// ════════════════════════════════════════════════════════════════════════
+
+// ⚠️ Adresse recevant les demandes de RDV (utilisée dans le lien mailto: ci-dessous)
+const EMAIL_CGP = "pellizzari.p@hotmail.com";
+
+const STEPS = [
+  { id:"intro" },
+  { id:"age", label:"Quel est votre âge ?", type:"number", unit:"ans", min:18, max:90, default:40 },
+  { id:"situation_familiale", label:"Quelle est votre situation familiale ?", type:"single",
+    options:[["celibataire","Célibataire"],["marie","Marié(e) / Pacsé(e)"],["divorce","Divorcé(e)"],["veuf","Veuf(ve)"]] },
+  { id:"enfants", label:"Combien d'enfants à charge ?", type:"number", unit:"enfant(s)", min:0, max:10, default:0 },
+  { id:"revenu_annuel", label:"Vos revenus annuels nets du foyer ?", sub:"Salaires, dividendes, revenus fonciers compris.",
+    type:"number", unit:"€/an", min:0, max:1000000, step:1000, default:50000 },
+  { id:"benefices_fonciers", label:"Vos bénéfices fonciers annuels (revenus locatifs nus) ?",
+    sub:"Si vous n'avez pas de bien locatif nu : 0 €.", type:"number", unit:"€/an", min:0, max:500000, step:500, default:0 },
+  { id:"capacite_epargne", label:"Votre capacité d'épargne mensuelle ?", type:"number", unit:"€/mois", min:0, max:20000, step:50, default:300 },
+  { id:"epargne_precaution", label:"Montant total de votre épargne de précaution ?",
+    sub:"Comptes courants + livrets disponibles.", type:"number", unit:"€", min:0, max:500000, step:500, default:5000 },
+  { id:"patrimoine_financier", label:"Votre patrimoine financier total ?",
+    sub:"Hors immobilier, hors épargne de précaution.", type:"number", unit:"€", min:0, max:5000000, step:1000, default:20000 },
+  { id:"patrimoine_immo", label:"Votre patrimoine immobilier net ?",
+    sub:"Valeur des biens moins les emprunts restants.", type:"number", unit:"€", min:0, max:10000000, step:5000, default:0 },
+  { id:"residence_principale", label:"Êtes-vous propriétaire de votre résidence principale ?", type:"single",
+    options:[["non","Non, je suis locataire"],["en_cours","Oui, en cours de remboursement"],["oui","Oui, intégralement payée"]] },
+  { id:"mensualites_credits", label:"Total de vos mensualités de crédits en cours ?",
+    sub:"Crédit immobilier, conso, auto… Mettez 0 € si aucun crédit.", type:"number", unit:"€/mois", min:0, max:10000, step:50, default:0 },
+  { id:"objectifs_prioritaires", label:"Vos objectifs patrimoniaux (jusqu'à 2)", type:"multi", max:2,
+    options:[["retraite","Préparer ma retraite"],["fiscalite","Réduire mes impôts"],["immobilier","Investir dans l'immobilier"],
+      ["transmission","Préparer ma transmission"],["revenus_compl","Revenus complémentaires"],["valoriser","Valoriser mon patrimoine"],["proteger","Protéger mes proches"]] },
+  { id:"horizon", label:"Sur quel horizon souhaitez-vous investir ?", type:"single",
+    options:[["court","Moins de 3 ans"],["moyen","3 à 8 ans"],["long","8 à 15 ans"],["tres_long","Plus de 15 ans"]] },
+  { id:"tolerance_risque", label:"Quelle est votre tolérance au risque ?", type:"single",
+    options:[["prudent","Prudente"],["equilibre","Équilibrée"],["offensif","Offensive"]] },
+  { id:"retraite_preparee", label:"Votre retraite est-elle déjà préparée ?", type:"single",
+    options:[["aucune","Pas du tout"],["faible","Un peu"],["moyenne","Moyennement"],["bonne","Bien préparée"]] },
+  { id:"prevoyance", label:"Avez-vous une prévoyance (décès / invalidité) ?", type:"single",
+    options:[["aucune","Aucune"],["employeur","Via mon employeur"],["individuelle","Contrat individuel"],["complet","Couverture complète"]] },
+  { id:"donation", label:"Avez-vous déjà entamé une démarche de donation ?", type:"single",
+    options:[["non","Non"],["reflexion","En réflexion"],["oui","Oui"]] },
+  { id:"produits_detenus", label:"Quels produits détenez-vous déjà ?", type:"multi", max:7,
+    options:[["av","Assurance-vie"],["per","PER"],["pea","PEA"],["scpi","SCPI"],["cto","Compte-titres"],["locatif","Immobilier locatif"],["aucun","Aucun"]] },
+  { id:"montant_av", label:"Montant actuel sur votre/vos assurance-vie ?", type:"number", unit:"€", min:0, max:5000000, step:1000, default:0,
+    condition:(a)=> (a.produits_detenus||[]).includes("av") },
+  { id:"montant_locatif", label:"Valeur estimée de votre bien locatif ?", type:"number", unit:"€", min:0, max:5000000, step:5000, default:150000,
+    condition:(a)=> (a.produits_detenus||[]).includes("locatif") },
+  { id:"result" },
+];
+
+let current = 0;
+let answers = {};
+let visibleSteps = [];
+
+function recomputeVisible(){
+  visibleSteps = STEPS.filter(s => !s.condition || s.condition(answers));
+}
+recomputeVisible();
+
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
 
 function render(){
-  const r=st.r;const f=r.fiscal;const pl=r.placement;const tr=r.transmission;
-  const h=[];
-  // Bloc fiscal
-  if(f.eco>500){
-    h.push(`<div class="blk"><div class="blk-l">Économie fiscale potentielle</div><div><span class="big">${fmtE(f.eco)}</span><span class="sm">/ an</span></div><div class="msg">Selon votre profil, un levier fiscal pourrait représenter cette économie annuelle en activant les bons dispositifs adaptés à votre situation.</div>
-      <div class="gr">
-        <div class="gr-c"><div class="gr-l">Sur 10 ans</div><div class="gr-v">${fmtK(f.parH['10ans'])}</div></div>
-        <div class="gr-c"><div class="gr-l">Sur 15 ans</div><div class="gr-v">${fmtK(f.parH['15ans'])}</div></div>
-        <div class="gr-c"><div class="gr-l">Sur 20 ans</div><div class="gr-v">${fmtK(f.parH['20ans'])}</div></div>
-      </div></div>`);
-    h.push(`<div class="tz"><span>🔒</span><p>La stratégie précise pour atteindre ce gain vous est dévoilée lors de votre échange offert avec un conseiller.</p></div>`);
+  recomputeVisible();
+  if(current >= visibleSteps.length) current = visibleSteps.length - 1;
+  const step = visibleSteps[current];
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  if(step.id === "intro"){
+    app.appendChild(renderIntro());
+    return;
   }
-  // Bloc placement
-  const g20_6=pl.par['20ans'].gain_6;const g10_5=pl.par['10ans'].gain_5;
-  if(pl.c0+pl.vpm*12*10>5000&&g20_6>0){
-    h.push(`<div class="blk2"><div class="blk-l">Gain potentiel sur votre épargne</div><div class="blk-t">Une meilleure allocation, un impact décuplé</div>
-      <div class="gr">
-        <div class="gr-c"><div class="gr-l">Gain sur 10 ans</div><div class="gr-v">+${fmtK(g10_5)}</div></div>
-        <div class="gr-c"><div class="gr-l">Gain sur 15 ans</div><div class="gr-v">+${fmtK(pl.par['15ans'].gain_6)}</div></div>
-        <div class="gr-c"><div class="gr-l">Gain sur 20 ans</div><div class="gr-v">+${fmtK(g20_6)}</div></div>
-      </div>
-      <div class="msg" style="color:var(--texte-2)">Avec une allocation optimisée, votre épargne pourrait générer ${fmtE(g20_6)} de plus sur 20 ans par rapport à un placement à 2 %/an.</div></div>`);
+  if(step.id === "result"){
+    app.appendChild(renderResultCard());
+    return;
   }
-  // Bloc transmission
-  if(tr.potAv>5000||tr.dem){
-    let msg='';
-    if(tr.pl>0)msg+=`En assurance-vie, jusqu'à <b>${fmtE(tr.pl)}</b> (${fmtE(ABAT_AV_DECES)} × ${tr.nbB} bénéficiaire${tr.nbB>1?'s':''}) peuvent être transmis hors droits de succession si versés avant vos 70 ans.`;
-    if(tr.potAv>5000)msg+=` <b>Potentiel non utilisé : ${fmtE(tr.potAv)}.</b>`;
-    if(tr.dem)msg+=` Votre patrimoine immobilier représente ${tr.ratio} % du total : une donation de la nue-propriété serait valorisée à ${Math.round(tr.npPct*100)} % de la valeur (base taxable ≈ ${fmtE(tr.bt)}), tout en conservant l'usufruit.`;
-    h.push(`<div class="blk"><div class="blk-l">Optimisation successorale</div><div class="blk-t">Ce que vous pouvez transmettre en avantage</div><div class="msg">${msg}</div></div>`);
+
+  const progressPct = Math.round((current / (visibleSteps.length-1)) * 100);
+  const progress = el("div","progress"); progress.appendChild(el("div","progress-bar")); progress.firstChild.style.width = progressPct+"%";
+  app.appendChild(progress);
+
+  const card = el("div","card");
+  card.appendChild(el("label","field-label", step.label));
+  if(step.sub) card.appendChild(el("div","field-sub", step.sub));
+
+  if(step.type === "number"){
+    const input = document.createElement("input");
+    input.type = "number"; input.min = step.min; input.max = step.max; input.step = step.step||1;
+    if(answers[step.id]===undefined) answers[step.id] = step.default;
+    input.value = answers[step.id] !== undefined && answers[step.id] !== null ? answers[step.id] : "";
+    input.placeholder = step.unit || "";
+    input.oninput = ()=>{ answers[step.id] = input.value === "" ? null : Number(input.value); };
+    card.appendChild(input);
+  } else if(step.type === "single"){
+    const box = el("div","opts");
+    step.options.forEach(([val,label])=>{
+      const o = el("div","opt", label);
+      if(answers[step.id]===val) o.classList.add("sel");
+      o.onclick = ()=>{ answers[step.id]=val; render(); };
+      box.appendChild(o);
+    });
+    card.appendChild(box);
+  } else if(step.type === "multi"){
+    if(!answers[step.id]) answers[step.id] = [];
+    const box = el("div","opts");
+    step.options.forEach(([val,label])=>{
+      const o = el("div","opt multi", label);
+      if(answers[step.id].includes(val)) o.classList.add("sel");
+      o.onclick = ()=>{
+        const arr = answers[step.id];
+        const idx = arr.indexOf(val);
+        if(idx>=0){ arr.splice(idx,1); }
+        else { if(step.max && arr.length>=step.max) arr.shift(); arr.push(val); }
+        render();
+      };
+      box.appendChild(o);
+    });
+    card.appendChild(box);
   }
-  if(h.length===0){
-    h.push(`<div class="blk2"><div class="blk-t">Votre situation semble déjà bien structurée</div><div class="msg" style="color:var(--texte-2)">Aucune source d'optimisation évidente à ce stade avec les informations fournies. Un entretien peut identifier des pistes complémentaires non visibles ici.</div></div>`);
+
+  app.appendChild(card);
+
+  const nav = el("div","nav");
+  if(current>0){
+    const back = el("button","btn-secondary","← Retour");
+    back.onclick = ()=>{ current--; render(); };
+    nav.appendChild(back);
+  } else {
+    nav.appendChild(el("div"));
   }
-  // Récap
-  h.push(`<div class="rec"><div class="rec-i"><div class="rec-l">TMI estimée</div><div class="rec-v">${r.tmi} %</div></div><div class="rec-i"><div class="rec-l">IR estimé</div><div class="rec-v">${fmtE(r.ir)}/an</div></div><div class="rec-i"><div class="rec-l">Parts fiscales</div><div class="rec-v">${parts(st.sit,st.enf)}</div></div></div>`);
-  document.getElementById('res').innerHTML=h.join('');
+  const next = el("button","btn-primary", current===visibleSteps.length-2 ? "Voir mon estimation →" : "Suivant →");
+  next.onclick = ()=>{ current++; render(); };
+  nav.appendChild(next);
+  app.appendChild(nav);
 }
 
-document.getElementById('brs').onclick=()=>{location.reload()};
-document.getElementById('brdv').onclick=()=>om();
-document.getElementById('mx').onclick=cm;
-document.getElementById('mov').onclick=e=>{if(e.target.id==='mov')cm()};
-function om(){document.getElementById('mov').classList.add('on')}
-function cm(){document.getElementById('mov').classList.remove('on');document.getElementById('mf').classList.remove('hd');document.getElementById('msuc').classList.add('hd')}
+function renderIntro(){
+  const card = el("div","card");
+  card.appendChild(el("div","eyebrow","Estimation patrimoniale · gratuit"));
+  card.appendChild(el("h1","","Découvrez votre potentiel d'optimisation."));
+  card.appendChild(el("div","subtitle","3 minutes pour identifier vos leviers d'économie fiscale, de gain sur votre épargne et d'optimisation successorale."));
+  card.appendChild(el("div","field-sub","Ces informations restent confidentielles et servent uniquement au calcul de votre estimation."));
+  const nav = el("div","nav");
+  nav.appendChild(el("div"));
+  const start = el("button","btn-primary","Commencer →");
+  start.onclick = ()=>{ current++; render(); };
+  nav.appendChild(start);
+  card.appendChild(nav);
+  return card;
+}
 
-document.getElementById('ls').onclick=async()=>{
-  const n=document.getElementById('ln').value.trim(),e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value.trim(),m=document.getElementById('lm').value.trim();
-  const er=document.getElementById('lerr');er.classList.add('hd');
-  if(n.length<2||!/\S+@\S+\.\S+/.test(e)||p.length<6){er.textContent='Nom, email et téléphone sont requis.';er.classList.remove('hd');return}
-  const b=document.getElementById('ls');b.disabled=true;b.textContent='Envoi…';
-  // FormSubmit (envoi email direct sans backend) — remplacer VOTRE_EMAIL par votre vraie adresse
-  const email='VOTRE_EMAIL@example.com';
+function renderResultCard(){
+  const card = el("div","card");
+  let data;
   try{
-    await fetch('https://formsubmit.co/ajax/'+email,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({
-      _subject:'[Bilan RDV] Nouveau lead — '+n,nom:n,email:e,telephone:p,message:m,
-      objectif:st.obj,age:st.age,tmi:st.r?.tmi,economie_annuelle:st.r?.fiscal?.eco,gain_20ans:st.r?.placement?.par['20ans']?.gain_6,potentiel_av:st.r?.transmission?.potAv,
-    })});
-    document.getElementById('mf').classList.add('hd');document.getElementById('msuc').classList.remove('hd');
-  }catch(er){document.getElementById('lerr').textContent="Envoi échoué. Réessayez.";document.getElementById('lerr').classList.remove('hd')}
-  finally{b.disabled=false;b.textContent='Envoyer ma demande'}
-};
+    data = buildTeaserSimulateur(answers);
+  } catch(e){
+    card.appendChild(el("div","err","Une erreur est survenue lors du calcul de votre estimation. Merci de vérifier vos réponses et de réessayer. ("+e.message+")"));
+    const retry = el("button","btn-secondary","← Revoir mes réponses");
+    retry.style.marginTop="14px";
+    retry.onclick = ()=>{ current--; render(); };
+    card.appendChild(retry);
+    return card;
+  }
+  renderResult(card, data);
+  return card;
+}
+
+function renderResult(card, data){
+  card.innerHTML = "";
+
+  const hero = el("div","result-hero");
+  hero.appendChild(el("div","eyebrow","Votre potentiel estimé"));
+  hero.appendChild(el("div","amount", (data.total_gains_cumules_estimes||0).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €"));
+  hero.appendChild(el("div","years","sur " + data.duree_annees + " ans, tous leviers cumulés"));
+  card.appendChild(hero);
+
+  card.appendChild(el("div","result-msg", data.message));
+
+  const cta = el("div","card");
+  cta.style.padding = "20px";
+  cta.appendChild(el("label","field-label","Recevoir le détail personnalisé"));
+  cta.appendChild(el("div","field-sub","Un conseiller vous contacte gratuitement pour affiner cette estimation et vous présenter les solutions concrètes adaptées à votre situation."));
+
+  const name = document.createElement("input"); name.type="text"; name.placeholder="Nom et prénom";
+  const email = document.createElement("input"); email.type="email"; email.placeholder="Email";
+  const phone = document.createElement("input"); phone.type="tel"; phone.placeholder="Téléphone";
+  [name,email,phone].forEach(i=>cta.appendChild(i));
+
+  const errBox = el("div","err","");
+  const send = el("button","btn-primary","Être recontacté(e) →");
+  send.style.width="100%"; send.style.marginTop="8px";
+  send.onclick = ()=>{
+    errBox.textContent = "";
+    if(!name.value || !email.value || !phone.value){
+      errBox.textContent = "Merci de renseigner votre nom, email et téléphone.";
+      cta.appendChild(errBox);
+      return;
+    }
+    const sujet = encodeURIComponent("Nouvelle demande de RDV — " + name.value);
+    const corps = encodeURIComponent(
+      "Nom : " + name.value + "\n" +
+      "Email : " + email.value + "\n" +
+      "Téléphone : " + phone.value + "\n\n" +
+      "Score patrimonial : " + data.score + "\n" +
+      "Gain fiscal cumulé estimé : " + data.economie_fiscale_cumulee_estimee + " € sur " + data.duree_annees + " ans\n" +
+      "Réduction succession estimée : " + data.economie_succession_estimee + " €\n" +
+      "Total cumulé estimé : " + data.total_gains_cumules_estimes + " €"
+    );
+    window.location.href = "mailto:" + EMAIL_CGP + "?subject=" + sujet + "&body=" + corps;
+    cta.innerHTML = "";
+    cta.appendChild(el("div","field-label","Merci ! ✓"));
+    cta.appendChild(el("div","field-sub","Votre logiciel de messagerie va s'ouvrir avec votre demande pré-remplie. Il ne vous reste qu'à cliquer sur \"Envoyer\"."));
+  };
+  cta.appendChild(send);
+  card.appendChild(cta);
+
+  card.appendChild(el("div","mention", data.mention_legale));
+}
+
+render();
 </script>
-</body></html>
+</body>
+</html>
