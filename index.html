@@ -134,6 +134,9 @@ const SEUIL_AV_LUXEMBOURG = 100000;
 const SEUIL_AV_LUXEMBOURG_PREMIUM = 1000000;
 
 function round(x) { return Math.round(x); }
+function getEnfantsTotal(a) {
+  return parseInt((a.enfants_total !== undefined && a.enfants_total !== null) ? a.enfants_total : (a.enfants || 0));
+}
 
 // ── Fiscalité : IR / TMI / parts fiscales ──────────────────────────────────
 
@@ -590,7 +593,7 @@ function computeDemembrementReco(a) {
 
 function computeCapiDemembreReco(a, planEpargne) {
   const age = parseInt(a.age || 40);
-  const enfants = parseInt(a.enfants || 0);
+  const enfants = getEnfantsTotal(a);
   let objectifs = a.objectifs_prioritaires || [];
   if (typeof objectifs === "string") objectifs = [objectifs];
 
@@ -651,7 +654,7 @@ function computeVenteImmoLocatifReco(a) {
   if (typeof objectifs === "string") objectifs = [objectifs];
   if (!objectifs.includes("transmission")) return null;
 
-  const enfants = parseInt(a.enfants || 0);
+  const enfants = getEnfantsTotal(a);
   const nbBeneficiaires = Math.max(1, enfants);
   const plafondAv = ABATTEMENT_AV_DECES_PAR_BENEFICIAIRE * nbBeneficiaires;
   const montantAvActuel = parseFloat(a.montant_av || 0);
@@ -940,14 +943,14 @@ function computeRecommendations(aIn) {
   let recosTop = recosFinal.slice(0, 10);
   if (extras.length) recosTop = [...recosFinal.slice(0, 10 - extras.length), ...extras];
 
-  const avDroitsEco = droitsAvEconomises(patFin, parseFloat(a.montant_av || 0), enfants, age);
+  const avDroitsEco = droitsAvEconomises(patFin, parseFloat(a.montant_av || 0), getEnfantsTotal(a), age);
 
   return {
     score: Math.round(score), priorites, recommandations: recosTop, forces, faiblesses,
     tax_savings: saving, capacite_emprunt: capaciteInfo, plan_affectation_epargne: planEpargne,
     demembrement, cap_demembre: capDemembre, av_luxembourg: avLuxembourg,
     av_droits_economises: avDroitsEco, fiscalite_calculee: a.fiscalite_calculee || {},
-    ifi_calcule: ifiInfo,
+    ifi_calcule: ifiInfo, montant_ir_resolu: ir, tmi_resolu: tmi,
   };
 }
 
@@ -967,14 +970,19 @@ const _LABEL_SOURCE_TO_ID = {
 
 function _dureeEtType(result) {
   const recos = result.recommandations || [];
-  const top = recos[0];
-  if (top && DUREE_ENGAGEMENT_ANNEES[top.id] !== undefined) {
-    return { duree_annees: DUREE_ENGAGEMENT_ANNEES[top.id], type: "immobilier" };
+  // recos est déjà trié par étoiles décroissantes : on cherche le premier
+  // dispositif immobilier présent, même s'il n'est pas le tout premier de
+  // la liste (ex : PER/Assurance-vie mieux notés en attendant que la base
+  // de précaution soit sécurisée), pour rester cohérent avec l'économie
+  // d'impôt qui, elle, compte déjà ce dispositif.
+  const immoPresent = recos.find(r => DUREE_ENGAGEMENT_ANNEES[r.id] !== undefined);
+  if (immoPresent) {
+    return { duree_annees: DUREE_ENGAGEMENT_ANNEES[immoPresent.id], type: "immobilier", top_id: immoPresent.id };
   }
-  return { duree_annees: DUREE_GENERIQUE_PLACEMENT, type: "placement" };
+  return { duree_annees: DUREE_GENERIQUE_PLACEMENT, type: "placement", top_id: null };
 }
 
-function _economieAnnuelleCoherente(result) {
+function _economieAnnuelleCoherente(result, a) {
   const idsRecommandes = new Set((result.recommandations || []).map(r => r.id));
   const sources = (result.tax_savings || {}).sources || [];
   let total = 0;
@@ -983,11 +991,16 @@ function _economieAnnuelleCoherente(result) {
     if (dispositifId !== undefined && !idsRecommandes.has(dispositifId)) continue;
     total += src.amount || 0;
   }
-  return round(total);
+  // On ne peut jamais économiser plus que l'impôt réellement dû : les
+  // différents leviers (PER + dispositif immobilier) sont chacun plafonnés
+  // individuellement à l'IR dans le moteur d'origine, mais leur SOMME doit
+  // elle aussi rester plafonnée à l'IR annuel réel du foyer.
+  const irReel = parseFloat(a.montant_ir || 0);
+  return round(Math.min(total, irReel > 0 ? irReel : total));
 }
 
 function _economieSuccessionDelta(result, a) {
-  const enfants = Math.max(1, parseInt(a.enfants || 0));
+  const enfants = Math.max(1, getEnfantsTotal(a));
   const abattementTotal = ABATTEMENT_DONATION_LIGNE_DIRECTE * enfants;
 
   const demembrement = result.demembrement;
@@ -1026,44 +1039,92 @@ function _economieSuccessionDelta(result, a) {
   return 0;
 }
 
+function _economieImmoAnnuelleCoherente(result, economieAnnuelleTotal) {
+  const idsRecommandes = new Set((result.recommandations || []).map(r => r.id));
+  const sources = (result.tax_savings || {}).sources || [];
+  let totalImmo = 0;
+  for (const src of sources) {
+    if (src.label === "Versement PER") continue; // le PER n'est pas un dispositif immobilier
+    const dispositifId = _LABEL_SOURCE_TO_ID[src.label];
+    if (dispositifId !== undefined && !idsRecommandes.has(dispositifId)) continue;
+    totalImmo += src.amount || 0;
+  }
+  // La part immobilière ne peut pas dépasser le total déjà plafonné à l'IR.
+  return round(Math.min(totalImmo, economieAnnuelleTotal));
+}
+
+function _versementPerAnnuel(a) {
+  const tmi = parseInt(a.tmi || 0);
+  const rev = parseFloat(a.revenu_annuel || 0);
+  const capEpargne = parseFloat(a.capacite_epargne || 0);
+  if (tmi >= 30 && capEpargne >= 100) {
+    return round(Math.min(rev * 0.10, Math.max(capEpargne * 12, 2000), 35000));
+  }
+  return 0;
+}
+
+function _montantProjetEtLoyer(a, result, dureeInfo) {
+  if (dureeInfo.type !== "immobilier") return { montant_projet: 0, loyer_mensuel: 0 };
+  const topId = dureeInfo.top_id;
+  const capaciteInfo = result.capacite_emprunt;
+  const projet = (topId === "malraux" || topId === "monuments_historiques")
+    ? computeProjetMalrauxMh(a, capaciteInfo)
+    : computeProjetImmo(a, capaciteInfo, topId || "lmnp_ancien");
+  return { montant_projet: projet.montant_projet || 0, loyer_mensuel: projet.loyer_estime_mensuel || 0 };
+}
+
 function buildTeaserSimulateur(a) {
+  const aResolue = resolveFiscalite(a);
   const result = computeRecommendations(a);
 
   const dureeInfo = _dureeEtType(result);
   const dureeAnnees = dureeInfo.duree_annees;
 
-  const economieAnnuelle = _economieAnnuelleCoherente(result);
-  const economieFiscaleCumulee = round(economieAnnuelle * dureeAnnees);
+  // 1) Économie d'impôt réelle (plafonnée à l'IR dû, jamais plus)
+  const economieAnnuelle = _economieAnnuelleCoherente(result, aResolue);
+  const economieImpotsCumulee = round(economieAnnuelle * dureeAnnees);
 
+  // 2) Patrimoine en plus (immobilier), net de la part déjà comptée en économie d'impôt
+  const economieImmoAnnuelle = _economieImmoAnnuelleCoherente(result, economieAnnuelle);
+  const { montant_projet: montantProjet, loyer_mensuel: loyerMensuel } = _montantProjetEtLoyer(aResolue, result, dureeInfo);
+  const patrimoineEnPlus = dureeInfo.type === "immobilier"
+    ? round(Math.max(0, montantProjet - economieImmoAnnuelle * dureeAnnees))
+    : 0;
+
+  // 3) Droits de succession en moins (delta avant/après optimisation)
   const economieSuccession = _economieSuccessionDelta(result, a);
-  const totalCumule = economieFiscaleCumulee + economieSuccession;
+
+  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession;
+
+  // 4) Confort mensuel : capital PER lissé sur 240 mois (20 ans) + loyer net
+  //    de la solution immobilière, quand il y en a un. Affiché à part, en
+  //    €/mois, car ce n'est pas homogène à un cumul en euros.
+  const versementPerAnnuel = _versementPerAnnuel(aResolue);
+  const capitalPerLisseMensuel = round((versementPerAnnuel * 20) / 240);
+  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel);
 
   const fmt = (n) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ");
-  const montantCumuleFmt = fmt(economieFiscaleCumulee);
-  const montantSuccessionFmt = fmt(economieSuccession);
 
-  let message;
-  if (dureeInfo.type === "immobilier") {
-    message = `Sur la base des informations saisies, une solution immobilière et une meilleure structuration patrimoniale pourraient générer un gain fiscal cumulé de l'ordre de ${montantCumuleFmt} € sur ${dureeAnnees} ans.`;
-  } else {
-    message = `Sur la base des informations saisies, une meilleure optimisation patrimoniale pourrait générer un gain fiscal cumulé de l'ordre de ${montantCumuleFmt} € sur ${dureeAnnees} ans.`;
-  }
-  if (economieSuccession > 0) {
-    message += ` À cela s'ajoute une réduction potentielle des droits de succession estimée à ${montantSuccessionFmt} €.`;
-  }
+  const lignes = [
+    { label: "Économie d'impôts accessible dans votre situation", montant: economieImpotsCumulee },
+  ];
+  if (patrimoineEnPlus > 0) lignes.push({ label: "Patrimoine en plus (déduction faite de la réduction d'impôts)", montant: patrimoineEnPlus });
+  if (economieSuccession > 0) lignes.push({ label: "Droits de succession en moins", montant: economieSuccession });
+
+  const message = `Sur la base des informations saisies, un potentiel total de l'ordre de ${fmt(totalPotentiel)} € a été identifié sur ${dureeAnnees} ans, tous leviers cumulés.`;
 
   return {
-    score: result.score,
     duree_annees: dureeAnnees,
-    economie_fiscale_annuelle_estimee: economieAnnuelle,
-    economie_fiscale_cumulee_estimee: economieFiscaleCumulee,
-    economie_succession_estimee: economieSuccession,
-    total_gains_cumules_estimes: round(totalCumule),
+    economie_impots_cumulee: economieImpotsCumulee,
+    patrimoine_en_plus: patrimoineEnPlus,
+    economie_succession: economieSuccession,
+    total_potentiel: round(totalPotentiel),
+    confort_mensuel: confortMensuel,
+    lignes,
     message,
-    mention_legale: "Ces estimations sont fournies à titre indicatif sur la base des informations saisies et ne constituent pas une garantie de résultat. Un rendez-vous avec un conseiller est nécessaire pour affiner ces montants.",
+    mention_legale: "Ces estimations sont fournies à titre indicatif sur la base des informations saisies et ne constituent pas une garantie de résultat. Le confort mensuel indiqué est une moyenne lissée sur 20 ans et ne prend pas en compte la performance financière future des supports. Un rendez-vous avec un conseiller est nécessaire pour affiner ces montants.",
   };
 }
-
 
 // ════════════════════════════════════════════════════════════════════════
 // QUESTIONNAIRE & INTERFACE
@@ -1077,7 +1138,10 @@ const STEPS = [
   { id:"age", label:"Quel est votre âge ?", type:"number", unit:"ans", min:18, max:90, default:40 },
   { id:"situation_familiale", label:"Quelle est votre situation familiale ?", type:"single",
     options:[["celibataire","Célibataire"],["marie","Marié(e) / Pacsé(e)"],["divorce","Divorcé(e)"],["veuf","Veuf(ve)"]] },
-  { id:"enfants", label:"Combien d'enfants à charge ?", type:"number", unit:"enfant(s)", min:0, max:10, default:0 },
+  { id:"enfants", label:"Combien d'enfants à charge (fiscalement) ?", type:"number", unit:"enfant(s)", min:0, max:10, default:0 },
+  { id:"enfants_total", label:"Combien d'enfants avez-vous au total ?",
+    sub:"Y compris ceux qui ne sont plus à votre charge (majeurs, autonomes...) — utile pour les abattements de succession et d'assurance-vie.",
+    type:"number", unit:"enfant(s)", min:0, max:10, default:(a)=>a.enfants||0 },
   { id:"revenu_annuel", label:"Vos revenus annuels nets du foyer ?", sub:"Salaires, dividendes, revenus fonciers compris.",
     type:"number", unit:"€/an", min:0, max:1000000, step:1000, default:50000 },
   { id:"benefices_fonciers", label:"Vos bénéfices fonciers annuels (revenus locatifs nus) ?",
@@ -1153,7 +1217,9 @@ function render(){
   if(step.type === "number"){
     const input = document.createElement("input");
     input.type = "number"; input.min = step.min; input.max = step.max; input.step = step.step||1;
-    if(answers[step.id]===undefined) answers[step.id] = step.default;
+    if(answers[step.id]===undefined) {
+      answers[step.id] = typeof step.default === "function" ? step.default(answers) : step.default;
+    }
     input.value = answers[step.id] !== undefined && answers[step.id] !== null ? answers[step.id] : "";
     input.placeholder = step.unit || "";
     input.oninput = ()=>{ answers[step.id] = input.value === "" ? null : Number(input.value); };
@@ -1216,6 +1282,40 @@ function renderIntro(){
   return card;
 }
 
+function formatReponseHumaine(step, val){
+  if(val === null || val === undefined || val === "") return "(non renseigné)";
+  if(step.type === "number"){
+    return val + (step.unit ? " " + step.unit : "");
+  }
+  if(step.type === "single"){
+    const found = step.options.find(([v])=>v===val);
+    return found ? found[1] : val;
+  }
+  if(step.type === "multi"){
+    if(!Array.isArray(val) || val.length===0) return "(aucun)";
+    return val.map(v=>{
+      const found = step.options.find(([vv])=>vv===v);
+      return found ? found[1] : v;
+    }).join(", ");
+  }
+  return String(val);
+}
+
+function buildRecapTexte(data){
+  const lignesTxt = data.lignes.map(l => "• " + l.label + " : " + l.montant.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €").join("\n");
+  const totalTxt = "TOTAL POTENTIEL ESTIMÉ : " + data.total_potentiel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " € (sur " + data.duree_annees + " ans)";
+  const confortTxt = data.confort_mensuel > 0
+    ? "\nConfort mensuel supplémentaire possible : " + data.confort_mensuel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €/mois (capital retraite lissé 20 ans + loyers potentiels)"
+    : "";
+
+  const reponsesTxt = visibleSteps
+    .filter(s => s.id!=="intro" && s.id!=="result")
+    .map(s => "- " + s.label.replace(/\s*\?$/,"") + " : " + formatReponseHumaine(s, answers[s.id]))
+    .join("\n");
+
+  return { lignesTxt, totalTxt, confortTxt, reponsesTxt };
+}
+
 function renderResultCard(){
   const card = el("div","card");
   let data;
@@ -1238,9 +1338,39 @@ function renderResult(card, data){
 
   const hero = el("div","result-hero");
   hero.appendChild(el("div","eyebrow","Votre potentiel estimé"));
-  hero.appendChild(el("div","amount", (data.total_gains_cumules_estimes||0).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €"));
+  hero.appendChild(el("div","amount", (data.total_potentiel||0).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €"));
   hero.appendChild(el("div","years","sur " + data.duree_annees + " ans, tous leviers cumulés"));
   card.appendChild(hero);
+
+  const detailCard = el("div","card");
+  detailCard.style.padding = "18px 22px";
+  data.lignes.forEach((l,i)=>{
+    const row = el("div");
+    row.style.display="flex"; row.style.justifyContent="space-between"; row.style.gap="12px";
+    row.style.padding = "10px 0";
+    if(i>0) row.style.borderTop = "1px solid var(--line)";
+    row.appendChild(el("div","", l.label));
+    const montant = el("div","", l.montant.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €");
+    montant.style.fontWeight="700"; montant.style.whiteSpace="nowrap"; montant.style.color="var(--green)";
+    row.appendChild(montant);
+    detailCard.appendChild(row);
+  });
+  card.appendChild(detailCard);
+
+  if(data.confort_mensuel > 0){
+    const monthly = el("div","card");
+    monthly.style.padding = "16px 22px";
+    monthly.style.display = "flex"; monthly.style.justifyContent = "space-between"; monthly.style.alignItems="center"; monthly.style.gap="12px"; monthly.style.flexWrap="wrap";
+    const left = el("div");
+    left.appendChild(el("div","field-label","Confort mensuel supplémentaire possible"));
+    left.appendChild(el("div","field-sub","Capital retraite lissé sur 20 ans + loyers potentiels de la solution immobilière."));
+    left.style.margin = "0";
+    monthly.appendChild(left);
+    const val = el("div","", data.confort_mensuel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €/mois");
+    val.style.fontWeight="700"; val.style.whiteSpace="nowrap"; val.style.color="var(--gold)"; val.style.fontSize="18px";
+    monthly.appendChild(val);
+    card.appendChild(monthly);
+  }
 
   card.appendChild(el("div","result-msg", data.message));
 
@@ -1264,20 +1394,41 @@ function renderResult(card, data){
       cta.appendChild(errBox);
       return;
     }
-    const sujet = encodeURIComponent("Nouvelle demande de RDV — " + name.value);
-    const corps = encodeURIComponent(
-      "Nom : " + name.value + "\n" +
-      "Email : " + email.value + "\n" +
-      "Téléphone : " + phone.value + "\n\n" +
-      "Score patrimonial : " + data.score + "\n" +
-      "Gain fiscal cumulé estimé : " + data.economie_fiscale_cumulee_estimee + " € sur " + data.duree_annees + " ans\n" +
-      "Réduction succession estimée : " + data.economie_succession_estimee + " €\n" +
-      "Total cumulé estimé : " + data.total_gains_cumules_estimes + " €"
-    );
-    window.location.href = "mailto:" + EMAIL_CGP + "?subject=" + sujet + "&body=" + corps;
+
+    const { lignesTxt, totalTxt, confortTxt, reponsesTxt } = buildRecapTexte(data);
+
+    const sujet = encodeURIComponent("Demande de rendez-vous — estimation patrimoniale de " + name.value);
+    const corps =
+"Bonjour,\n\n" +
+"J'ai réalisé mon estimation patrimoniale en ligne et voici le résultat obtenu. J'aimerais en savoir plus, s'il vous plaît.\n" +
+"Merci d'avance de me recontacter dès que possible.\n\n" +
+"Mes coordonnées :\n" +
+"Nom : " + name.value + "\n" +
+"Email : " + email.value + "\n" +
+"Téléphone : " + phone.value + "\n\n" +
+"— Résultat de l'estimation —\n" +
+lignesTxt + "\n" +
+totalTxt + confortTxt + "\n\n" +
+"— Détail de mes réponses au questionnaire —\n" +
+reponsesTxt + "\n\n" +
+"Bien cordialement,\n" +
+name.value;
+
+    window.location.href = "mailto:" + EMAIL_CGP + "?subject=" + sujet + "&body=" + encodeURIComponent(corps);
+
     cta.innerHTML = "";
     cta.appendChild(el("div","field-label","Merci ! ✓"));
     cta.appendChild(el("div","field-sub","Votre logiciel de messagerie va s'ouvrir avec votre demande pré-remplie. Il ne vous reste qu'à cliquer sur \"Envoyer\"."));
+    const copyNote = el("div","field-sub","Si votre messagerie ne s'ouvre pas automatiquement, vous pouvez copier le récapitulatif ci-dessous et l'envoyer manuellement à " + EMAIL_CGP + " :");
+    copyNote.style.marginTop = "14px";
+    cta.appendChild(copyNote);
+    const recapBox = document.createElement("textarea");
+    recapBox.readOnly = true;
+    recapBox.value = corps;
+    recapBox.style.width="100%"; recapBox.style.height="140px"; recapBox.style.fontFamily="inherit";
+    recapBox.style.fontSize="13px"; recapBox.style.padding="10px"; recapBox.style.border="1px solid var(--line)";
+    recapBox.style.borderRadius="9px"; recapBox.style.background="#fdfcf9"; recapBox.style.color="var(--ink)";
+    cta.appendChild(recapBox);
   };
   cta.appendChild(send);
   card.appendChild(cta);
