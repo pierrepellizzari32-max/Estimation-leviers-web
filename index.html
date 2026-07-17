@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --cream:#faf6ef; --ink:#1f2a24; --green:#1f4d3d; --green-light:#2e6b53;
@@ -320,35 +321,97 @@ function computeProjetImmo(a, capaciteInfo, dispositifId = "lmnp_ancien") {
   };
 }
 
-function computeProjetMalrauxMh(a, capaciteInfo) {
+// Durée d'étalement fiscal (nb d'années où l'avantage se répète) et durée
+// d'engagement technique par dispositif — reprend exactement les valeurs
+// du moteur d'origine (server.py, DUREE_DISPOSITIF), utilisées uniquement
+// pour lisser la "Participation" nette d'impôt.
+const DUREE_DISPOSITIF_FISCAL = {
+  malraux: { etalement: DUREE_MALRAUX_AVEC_PROROGATION, engagement: 9 },
+  monuments_historiques: { etalement: 4, engagement: 15 },
+  denormandie: { etalement: 9, engagement: 9 },
+  deficit_foncier: { etalement: 10, engagement: 3 },
+};
+
+function _participationMensuelle(mensualite, loyerMensuel, economieFiscaleAnnuelleRaw, dispositifId) {
+  const tech = DUREE_DISPOSITIF_FISCAL[dispositifId];
+  let ecoFiscaleLisseeAnnuelle = 0;
+  if (tech && tech.etalement > 0 && tech.engagement > 0) {
+    ecoFiscaleLisseeAnnuelle = (economieFiscaleAnnuelleRaw * tech.etalement) / tech.engagement;
+  }
+  return mensualite - loyerMensuel - (ecoFiscaleLisseeAnnuelle / 12.0);
+}
+
+function computeProjetMalrauxMh(a, capaciteInfo, dispositifId = "malraux") {
   const ir = parseFloat(a.montant_ir || 0);
+  const tmi = parseInt(a.tmi || 0);
   const capaciteMax = parseFloat(capaciteInfo.capacite_disponible_investissement || 0);
+  const capEpargne = parseFloat(a.capacite_epargne || 0);
   const tauxFrais = tauxFraisNotaire("malraux");
 
   const enveloppeTravaux = ir * MULTIPLE_ENVELOPPE_TRAVAUX_MALRAUX_MH;
   const montantPiloteParIr = enveloppeTravaux / RATIO_TRAVAUX_DEFISCALISABLE;
   const montantMaxAvantFrais = capaciteMax > 0 ? capaciteMax / (1 + tauxFrais) : 0.0;
-  const montantFinal = capaciteMax > 0 ? Math.min(montantPiloteParIr, montantMaxAvantFrais) : 0.0;
+  let montantFinal = capaciteMax > 0 ? Math.min(montantPiloteParIr, montantMaxAvantFrais) : 0.0;
 
   if (montantFinal <= 0) {
     return { montant_projet: 0, montant_emprunte: 0, frais_notaire: 0, taux_frais_notaire: tauxFrais,
-      mensualite_credit: 0, loyer_estime_mensuel: 0, effort_net_mensuel: 0,
+      mensualite_credit: 0, loyer_estime_mensuel: 0, effort_net_mensuel: 0, participation_mensuelle: 0,
       montant_eligible_travaux_80pct: 0, enveloppe_travaux: round(enveloppeTravaux),
-      ir_annuel: round(ir), plafonne_par_capacite_emprunt: false, ajuste: false };
+      ir_annuel: round(ir), plafonne_par_capacite_emprunt: false, ajuste_participation: false };
+  }
+
+  // Économie fiscale annuelle (brute) pour un montant donné — proportionnelle
+  // au montant investi jusqu'au plafonnement à l'IR.
+  function economieFiscaleAnnuelle(m) {
+    const assietteAnnuelle = (m * RATIO_TRAVAUX_DEFISCALISABLE) / DUREE_MALRAUX_AVEC_PROROGATION;
+    const taux = dispositifId === "monuments_historiques" ? (tmi / 100) : TAUX_MALRAUX;
+    return Math.min(assietteAnnuelle * taux, ir);
+  }
+  function participationPour(m) {
+    const montantEmprunte = m * (1 + tauxFrais);
+    const mensualite = annuiteMensuelle(montantEmprunte);
+    const loyer = m * RENDEMENT_LOCATIF_ESTIME / 12.0;
+    const eco = economieFiscaleAnnuelle(m);
+    return _participationMensuelle(mensualite, loyer, eco, dispositifId);
+  }
+
+  // Si même au montant maximal (capacité d'emprunt/IR) la Participation ne
+  // dépasse pas la capacité d'épargne, pas besoin d'ajuster.
+  let ajustePourParticipation = false;
+  if (participationPour(montantFinal) > capEpargne && capEpargne >= 0) {
+    ajustePourParticipation = true;
+    let lo = 0.0, hi = montantFinal;
+    for (let k = 0; k < 60; k++) {
+      const mid = (lo + hi) / 2;
+      if (participationPour(mid) > capEpargne) hi = mid; else lo = mid;
+    }
+    montantFinal = lo;
+  }
+
+  if (montantFinal <= 0) {
+    return { montant_projet: 0, montant_emprunte: 0, frais_notaire: 0, taux_frais_notaire: tauxFrais,
+      mensualite_credit: 0, loyer_estime_mensuel: 0, effort_net_mensuel: 0, participation_mensuelle: 0,
+      montant_eligible_travaux_80pct: 0, enveloppe_travaux: round(enveloppeTravaux),
+      ir_annuel: round(ir), plafonne_par_capacite_emprunt: false, ajuste_participation: ajustePourParticipation };
   }
 
   const montantEmprunteFinal = montantFinal * (1 + tauxFrais);
   const mensualiteFinale = annuiteMensuelle(montantEmprunteFinal);
   const loyerFinal = montantFinal * RENDEMENT_LOCATIF_ESTIME / 12.0;
+  const ecoFiscaleFinale = economieFiscaleAnnuelle(montantFinal);
+  const participationFinale = _participationMensuelle(mensualiteFinale, loyerFinal, ecoFiscaleFinale, dispositifId);
 
   return {
     montant_projet: round(montantFinal), montant_emprunte: round(montantEmprunteFinal),
     frais_notaire: round(montantFinal * tauxFrais), taux_frais_notaire: tauxFrais,
     mensualite_credit: round(mensualiteFinale), loyer_estime_mensuel: round(loyerFinal),
     effort_net_mensuel: round(mensualiteFinale - loyerFinal),
+    participation_mensuelle: round(Math.max(0, participationFinale)),
+    economie_fiscale_annuelle: round(ecoFiscaleFinale),
     montant_eligible_travaux_80pct: round(montantFinal * RATIO_TRAVAUX_DEFISCALISABLE),
     enveloppe_travaux: round(enveloppeTravaux), ir_annuel: round(ir),
-    plafonne_par_capacite_emprunt: montantPiloteParIr > montantMaxAvantFrais, ajuste: true,
+    plafonne_par_capacite_emprunt: montantPiloteParIr > montantMaxAvantFrais,
+    ajuste_participation: ajustePourParticipation,
   };
 }
 
@@ -377,13 +440,14 @@ function immoRecommendations(a) {
 
   const prioriteImmoLevier = (capEmpruntMontant >= 140000 && age < 53 && capEpargne > 500);
   const marcheMalrauxMhDisponible = capEmpruntMontant >= SEUIL_MARCHE_MALRAUX_MH;
-  const projetMalrauxMh = computeProjetMalrauxMh(a, capacite);
+  const projetsMalrauxMhCache = {};
   const projetsCache = {};
 
   function reco(prodId, stars, why) {
     let proj;
     if (prodId === "malraux" || prodId === "monuments_historiques") {
-      proj = projetMalrauxMh;
+      if (!(prodId in projetsMalrauxMhCache)) projetsMalrauxMhCache[prodId] = computeProjetMalrauxMh(a, capacite, prodId);
+      proj = projetsMalrauxMhCache[prodId];
     } else {
       if (!(prodId in projetsCache)) projetsCache[prodId] = computeProjetImmo(a, capacite, prodId);
       proj = projetsCache[prodId];
@@ -452,8 +516,8 @@ function computeTaxSavings(a) {
   const projet = peutEmprunter ? computeProjetImmo(a, capaciteInfo) : null;
   const montantTravaux80 = projet ? projet.montant_eligible_travaux_80pct : 0;
 
-  const projetMalrauxMh = peutEmprunter ? computeProjetMalrauxMh(a, capaciteInfo) : null;
-  const montantTravaux80MalrauxMh = projetMalrauxMh ? projetMalrauxMh.montant_eligible_travaux_80pct : 0;
+  const projetMalraux = peutEmprunter ? computeProjetMalrauxMh(a, capaciteInfo, "malraux") : null;
+  const projetMh = peutEmprunter ? computeProjetMalrauxMh(a, capaciteInfo, "monuments_historiques") : null;
 
   const sources = [];
   let total = 0.0;
@@ -475,14 +539,12 @@ function computeTaxSavings(a) {
       sources.push({ label: "Investissement Denormandie", amount: round(eco) });
       total += eco;
     } else if (ir >= 9000 && tmi >= 30 && marcheMalrauxMhDisponible) {
-      const assietteAnnuelle = montantTravaux80MalrauxMh / DUREE_MALRAUX_AVEC_PROROGATION;
-      const eco = Math.min(assietteAnnuelle * TAUX_MALRAUX, ir);
+      const eco = projetMalraux ? projetMalraux.economie_fiscale_annuelle : 0;
       sources.push({ label: "Investissement Malraux", amount: round(eco) });
       total += eco;
     }
     if (ir >= 20000 && tmi >= 41 && marcheMalrauxMhDisponible) {
-      const assietteAnnuelle = montantTravaux80MalrauxMh / 4;
-      const eco = Math.min(assietteAnnuelle * (tmi / 100.0), ir);
+      const eco = projetMh ? projetMh.economie_fiscale_annuelle : 0;
       sources.push({ label: "Monuments Historiques", amount: round(eco) });
       total += eco;
     }
@@ -961,6 +1023,11 @@ const DUREE_ENGAGEMENT_ANNEES = {
   lmnp_ancien: 15, lmnp_para_hotelier: 15, lmnp_neuf: 15,
   immo_rendement_ancien: 15, immo_rendement_neuf: 15, scpi_nue_propriete: 15,
 };
+// Durée pendant laquelle le gain fiscal ANNUEL se répète réellement.
+// Pour Malraux/MH, la réduction vient de l'étalement des travaux (6 ans /
+// 4 ans) : au-delà, il n'y a plus de déduction sans nouveaux travaux. Pour
+// Denormandie/Déficit foncier, la réduction dure bien tout l'engagement.
+// Absent de cette table = on utilise la durée d'engagement complète.
 const DUREE_GENERIQUE_PLACEMENT = 15;
 
 const _LABEL_SOURCE_TO_ID = {
@@ -968,14 +1035,20 @@ const _LABEL_SOURCE_TO_ID = {
   "Monuments Historiques": "monuments_historiques", "Déficit foncier": "deficit_foncier",
 };
 
-function _dureeEtType(result) {
+function _dureeEtType(result, age) {
   const recos = result.recommandations || [];
+  const horizonRetraite = Math.max(0, AGE_RETRAITE_PROJECTION - parseInt(age || 40));
   // recos est déjà trié par étoiles décroissantes : on cherche le premier
   // dispositif immobilier présent, même s'il n'est pas le tout premier de
   // la liste (ex : PER/Assurance-vie mieux notés en attendant que la base
   // de précaution soit sécurisée), pour rester cohérent avec l'économie
-  // d'impôt qui, elle, compte déjà ce dispositif.
-  const immoPresent = recos.find(r => DUREE_ENGAGEMENT_ANNEES[r.id] !== undefined);
+  // d'impôt qui, elle, compte déjà ce dispositif. On exclut cependant tout
+  // dispositif dont l'engagement déborderait sur la retraite du client :
+  // dans ce cas ce n'est plus une piste réaliste, on bascule sur la
+  // logique "placement" (assurance-vie).
+  const immoPresent = recos.find(r =>
+    DUREE_ENGAGEMENT_ANNEES[r.id] !== undefined && DUREE_ENGAGEMENT_ANNEES[r.id] <= horizonRetraite
+  );
   if (immoPresent) {
     return { duree_annees: DUREE_ENGAGEMENT_ANNEES[immoPresent.id], type: "immobilier", top_id: immoPresent.id };
   }
@@ -1063,45 +1136,114 @@ function _versementPerAnnuel(a) {
   return 0;
 }
 
+const AGE_RETRAITE_PROJECTION = 64;
+const TAUX_PLACEMENT_OPTIMISE = 0.05;   // hypothèse : allocation dynamique bien construite
+const TAUX_PLACEMENT_PRUDENT = 0.02;    // hypothèse : fonds euros / livrets, référence de comparaison
+const TAUX_RETRAIT_ANNUEL_RETRAITE = 0.03; // règle des 3 % / an, convertie en mensuel
+
+function _valeurFutureVersementsMensuels(versementMensuel, tauxAnnuel, nbMois) {
+  if (nbMois <= 0 || versementMensuel <= 0) return 0;
+  const i = tauxAnnuel / 12.0;
+  if (i <= 0) return versementMensuel * nbMois;
+  return versementMensuel * ((Math.pow(1 + i, nbMois) - 1) / i);
+}
+
+function _valeurFutureCapitalUnique(capital, tauxAnnuel, nbMois) {
+  if (nbMois <= 0 || capital <= 0) return capital;
+  const i = tauxAnnuel / 12.0;
+  return capital * Math.pow(1 + i, nbMois);
+}
+
+function _projectionAvOptimisee(a, planEpargne) {
+  const age = parseInt(a.age || 40);
+  const versementMensuel = parseFloat(a.capacite_epargne || 0);
+  const nbMois = Math.max(0, (AGE_RETRAITE_PROJECTION - age) * 12);
+
+  // Capital déjà disponible et réallocable : l'épargne au-delà du seuil de
+  // précaution (comptes courants/livrets qui dorment) — à réinvestir en
+  // une fois, en plus des versements mensuels réguliers à venir.
+  const capitalReallocable = planEpargne ? parseFloat(planEpargne.surplus_a_affecter || 0) : 0;
+
+  const capitalOptimise =
+    _valeurFutureCapitalUnique(capitalReallocable, TAUX_PLACEMENT_OPTIMISE, nbMois) +
+    _valeurFutureVersementsMensuels(versementMensuel, TAUX_PLACEMENT_OPTIMISE, nbMois);
+  const capitalPrudent =
+    _valeurFutureCapitalUnique(capitalReallocable, TAUX_PLACEMENT_PRUDENT, nbMois) +
+    _valeurFutureVersementsMensuels(versementMensuel, TAUX_PLACEMENT_PRUDENT, nbMois);
+  const gainAllocation = Math.max(0.0, capitalOptimise - capitalPrudent);
+  const revenuMensuelRetraite = (capitalOptimise * TAUX_RETRAIT_ANNUEL_RETRAITE) / 12.0;
+
+  return {
+    nb_mois: nbMois, capital_reallocable: round(capitalReallocable),
+    capital_optimise: round(capitalOptimise), capital_prudent: round(capitalPrudent),
+    gain_allocation: round(gainAllocation), revenu_mensuel_retraite: round(revenuMensuelRetraite),
+  };
+}
+
 function _montantProjetEtLoyer(a, result, dureeInfo) {
-  if (dureeInfo.type !== "immobilier") return { montant_projet: 0, loyer_mensuel: 0 };
+  if (dureeInfo.type !== "immobilier") return { montant_projet: 0, loyer_mensuel: 0, participation_mensuelle: 0 };
   const topId = dureeInfo.top_id;
   const capaciteInfo = result.capacite_emprunt;
   const projet = (topId === "malraux" || topId === "monuments_historiques")
-    ? computeProjetMalrauxMh(a, capaciteInfo)
+    ? computeProjetMalrauxMh(a, capaciteInfo, topId)
     : computeProjetImmo(a, capaciteInfo, topId || "lmnp_ancien");
-  return { montant_projet: projet.montant_projet || 0, loyer_mensuel: projet.loyer_estime_mensuel || 0 };
+  return {
+    montant_projet: projet.montant_projet || 0,
+    loyer_mensuel: projet.loyer_estime_mensuel || 0,
+    participation_mensuelle: projet.participation_mensuelle || 0,
+  };
 }
 
 function buildTeaserSimulateur(a) {
   const aResolue = resolveFiscalite(a);
   const result = computeRecommendations(a);
+  const age = parseInt(aResolue.age || 40);
 
-  const dureeInfo = _dureeEtType(result);
+  const dureeInfo = _dureeEtType(result, age);
   const dureeAnnees = dureeInfo.duree_annees;
 
-  // 1) Économie d'impôt réelle (plafonnée à l'IR dû, jamais plus)
+  // 1) Économie d'impôt réelle. La part immobilière (Malraux/MH) ne peut se
+  //    répéter que sur sa durée d'étalement fiscal réel (6 ans / 4 ans) —
+  //    au-delà, plus de déduction sans nouveaux travaux. Le reste (PER,
+  //    Denormandie, Déficit foncier) est supposé se répéter sur la durée
+  //    d'engagement complète. Le tout reste plafonné à l'IR annuel réel.
   const economieAnnuelle = _economieAnnuelleCoherente(result, aResolue);
-  const economieImpotsCumulee = round(economieAnnuelle * dureeAnnees);
-
-  // 2) Patrimoine en plus (immobilier), net de la part déjà comptée en économie d'impôt
   const economieImmoAnnuelle = _economieImmoAnnuelleCoherente(result, economieAnnuelle);
-  const { montant_projet: montantProjet, loyer_mensuel: loyerMensuel } = _montantProjetEtLoyer(aResolue, result, dureeInfo);
+  const economieAutreAnnuelle = economieAnnuelle - economieImmoAnnuelle;
+  const horizonRetraite = Math.max(0, AGE_RETRAITE_PROJECTION - age);
+  const techImmo = dureeInfo.top_id ? DUREE_DISPOSITIF_FISCAL[dureeInfo.top_id] : undefined;
+  // La réduction d'impôt ne peut pas s'appliquer plus longtemps que
+  // l'étalement fiscal réel du dispositif, ni au-delà du départ à la
+  // retraite du client (au-delà, plus de revenus professionnels à défiscaliser).
+  const dureeEtalementImmo = techImmo
+    ? Math.min(dureeAnnees, techImmo.etalement, horizonRetraite)
+    : Math.min(dureeAnnees, horizonRetraite);
+  const economieImpotsCumulee = round(economieImmoAnnuelle * dureeEtalementImmo + economieAutreAnnuelle * Math.min(dureeAnnees, horizonRetraite));
+
+  // 2) Patrimoine en plus (immobilier), net de la part immo déjà comptée en économie d'impôt
+  const { montant_projet: montantProjet, loyer_mensuel: loyerMensuel, participation_mensuelle: participationMensuelle } = _montantProjetEtLoyer(aResolue, result, dureeInfo);
   const patrimoineEnPlus = dureeInfo.type === "immobilier"
-    ? round(Math.max(0, montantProjet - economieImmoAnnuelle * dureeAnnees))
+    ? round(Math.max(0, montantProjet - economieImmoAnnuelle * dureeEtalementImmo))
     : 0;
 
   // 3) Droits de succession en moins (delta avant/après optimisation)
   const economieSuccession = _economieSuccessionDelta(result, a);
 
-  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession;
+  // 4) Pas d'immobilier retenu : optimisation d'un placement (assurance-vie)
+  //    — gain d'une allocation dynamique (5 %/an) vs un placement prudent
+  //    (2 %/an), à versements mensuels constants jusqu'à 64 ans.
+  const avProjection = dureeInfo.type === "placement" ? _projectionAvOptimisee(aResolue, result.plan_affectation_epargne) : null;
+  const gainAllocation = avProjection ? avProjection.gain_allocation : 0;
 
-  // 4) Confort mensuel : capital PER lissé sur 240 mois (20 ans) + loyer net
-  //    de la solution immobilière, quand il y en a un. Affiché à part, en
-  //    €/mois, car ce n'est pas homogène à un cumul en euros.
+  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession + gainAllocation;
+
+  // 5) Confort mensuel : capital PER lissé sur 240 mois (20 ans) + loyer net
+  //    de la solution immobilière + revenu complémentaire de retraite estimé
+  //    à partir de 64 ans (3 %/an du capital constitué, divisé par 12).
   const versementPerAnnuel = _versementPerAnnuel(aResolue);
   const capitalPerLisseMensuel = round((versementPerAnnuel * 20) / 240);
-  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel);
+  const revenuRetraiteMensuel = avProjection ? avProjection.revenu_mensuel_retraite : 0;
+  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel + revenuRetraiteMensuel);
 
   const fmt = (n) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ");
 
@@ -1109,6 +1251,7 @@ function buildTeaserSimulateur(a) {
     { label: "Économie d'impôts accessible dans votre situation", montant: economieImpotsCumulee },
   ];
   if (patrimoineEnPlus > 0) lignes.push({ label: "Patrimoine en plus (déduction faite de la réduction d'impôts)", montant: patrimoineEnPlus });
+  if (gainAllocation > 0) lignes.push({ label: "Gain grâce à une allocation optimisée (vs. placement prudent)", montant: gainAllocation });
   if (economieSuccession > 0) lignes.push({ label: "Droits de succession en moins", montant: economieSuccession });
 
   const message = `Sur la base des informations saisies, un potentiel total de l'ordre de ${fmt(totalPotentiel)} € a été identifié sur ${dureeAnnees} ans, tous leviers cumulés.`;
@@ -1117,12 +1260,15 @@ function buildTeaserSimulateur(a) {
     duree_annees: dureeAnnees,
     economie_impots_cumulee: economieImpotsCumulee,
     patrimoine_en_plus: patrimoineEnPlus,
+    gain_allocation: gainAllocation,
     economie_succession: economieSuccession,
     total_potentiel: round(totalPotentiel),
     confort_mensuel: confortMensuel,
+    revenu_retraite_mensuel: revenuRetraiteMensuel,
+    participation_mensuelle: participationMensuelle,
     lignes,
     message,
-    mention_legale: "Ces estimations sont fournies à titre indicatif sur la base des informations saisies et ne constituent pas une garantie de résultat. Le confort mensuel indiqué est une moyenne lissée sur 20 ans et ne prend pas en compte la performance financière future des supports. Un rendez-vous avec un conseiller est nécessaire pour affiner ces montants.",
+    mention_legale: "Ces estimations sont fournies à titre indicatif sur la base des informations saisies et ne constituent pas une garantie de résultat. Le confort mensuel indiqué (capital retraite, loyers, revenu complémentaire) est une projection lissée qui ne prend pas en compte la performance financière future réelle des supports. Un rendez-vous avec un conseiller est nécessaire pour affiner ces montants.",
   };
 }
 
@@ -1305,7 +1451,7 @@ function buildRecapTexte(data){
   const lignesTxt = data.lignes.map(l => "• " + l.label + " : " + l.montant.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €").join("\n");
   const totalTxt = "TOTAL POTENTIEL ESTIMÉ : " + data.total_potentiel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " € (sur " + data.duree_annees + " ans)";
   const confortTxt = data.confort_mensuel > 0
-    ? "\nConfort mensuel supplémentaire possible : " + data.confort_mensuel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €/mois (capital retraite lissé 20 ans + loyers potentiels)"
+    ? "\nRevenus complémentaires à la retraite estimés : " + data.confort_mensuel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €/mois (capital retraite lissé + loyers potentiels)"
     : "";
 
   const reponsesTxt = visibleSteps
@@ -1314,6 +1460,123 @@ function buildRecapTexte(data){
     .join("\n");
 
   return { lignesTxt, totalTxt, confortTxt, reponsesTxt };
+}
+
+function buildInternalPdfBase64(answers, data){
+  const result = computeRecommendations(answers);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const marginX = 40;
+  let y = 50;
+  const lineHeight = 16;
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  function ensureSpace(extra){
+    if(y + extra > pageHeight - 40){ doc.addPage(); y = 50; }
+  }
+  function title(txt){
+    ensureSpace(24);
+    doc.setFont("helvetica","bold"); doc.setFontSize(13);
+    doc.text(txt, marginX, y); y += 20;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  }
+  function line(txt){
+    ensureSpace(lineHeight);
+    const wrapped = doc.splitTextToSize(txt, 515);
+    wrapped.forEach(w=>{ ensureSpace(lineHeight); doc.text(w, marginX, y); y += lineHeight; });
+  }
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(16);
+  doc.text("Récapitulatif interne — usage CGP uniquement", marginX, y); y += 26;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  line("Généré automatiquement depuis le simulateur — à ne pas transmettre au client.");
+  y += 6;
+
+  title("Coordonnées du prospect");
+  line("Nom : " + (answers.__contact_name || ""));
+  line("Email : " + (answers.__contact_email || ""));
+  line("Téléphone : " + (answers.__contact_phone || ""));
+  y += 6;
+
+  title("Réponses au questionnaire");
+  visibleSteps.filter(s=>s.id!=="intro"&&s.id!=="result").forEach(s=>{
+    line("• " + s.label.replace(/\s*\?$/,"") + " : " + formatReponseHumaine(s, answers[s.id]));
+  });
+  y += 6;
+
+  title("Score et priorités détectées");
+  line("Score patrimonial : " + result.score + "/100");
+  line("Priorités (ordre) : " + result.priorites.map(p=>p.label+" ("+p.intensity+"/10)").join(" · "));
+  y += 6;
+
+  title("Solutions retenues par le moteur (noms réels)");
+  result.recommandations.forEach(r=>{
+    line("• " + r.label + " — " + r.stars + "/5 étoiles" + (r.etape_suivante ? " (à horizon, base de précaution pas encore sécurisée)" : ""));
+  });
+  y += 6;
+
+  if(data.patrimoine_en_plus > 0 || data.economie_impots_cumulee > 0){
+    const topImmo = result.recommandations.find(r => r.projet && r.projet.montant_projet > 0);
+    title("Détail du calcul — volet immobilier");
+    if(topImmo && topImmo.projet){
+      const p = topImmo.projet;
+      line("Dispositif : " + topImmo.label);
+      line("Montant du projet : " + p.montant_projet + " € (emprunté : " + (p.montant_emprunte||0) + " €)");
+      line("Mensualité de crédit estimée : " + p.mensualite_credit + " €/mois");
+      line("Loyer estimé : " + p.loyer_estime_mensuel + " €/mois");
+      if(p.participation_mensuelle !== undefined) line("Participation nette mensuelle (mensualité - loyer - économie fiscale lissée) : " + p.participation_mensuelle + " €/mois");
+      if(p.economie_fiscale_annuelle !== undefined) line("Économie fiscale annuelle (dispositif) : " + p.economie_fiscale_annuelle + " €/an");
+    }
+    line("Économie d'impôts cumulée retenue (teaser) : " + data.economie_impots_cumulee + " €");
+    line("Patrimoine en plus retenu (teaser) : " + data.patrimoine_en_plus + " €");
+    y += 6;
+  }
+
+  if(data.gain_allocation > 0){
+    title("Détail du calcul — volet placement (assurance-vie)");
+    line("Versement mensuel pris en compte : " + (answers.capacite_epargne||0) + " €/mois");
+    line("Hypothèse allocation optimisée : 5 %/an — Hypothèse placement prudent : 2 %/an");
+    line("Gain lié à l'allocation (delta 5% vs 2%) : " + data.gain_allocation + " €");
+    line("Revenu complémentaire retraite estimé (dès 64 ans, 3 %/an du capital / 12) : " + data.revenu_retraite_mensuel + " €/mois");
+    y += 6;
+  }
+
+  if(data.economie_succession > 0){
+    title("Détail du calcul — volet succession");
+    if(result.demembrement) line("Démembrement — valeur du bien : " + result.demembrement.valeur_bien_indicative + " € / valeur nue-propriété retenue : " + result.demembrement.base_taxable_indicative + " €");
+    if(result.cap_demembre) line("Capitalisation démembrée — montant excédent : " + result.cap_demembre.montant_excedent + " € / base taxable après abattement : " + result.cap_demembre.base_taxable_apres_abattement + " €");
+    if(result.av_droits_economises) line("Optimisation assurance-vie — potentiel restant : " + result.av_droits_economises.potentiel_restant + " €");
+    line("Droits de succession économisés (delta avant/après) : " + data.economie_succession + " €");
+    y += 6;
+  }
+
+  title("Total potentiel présenté au prospect");
+  line("Sur " + data.duree_annees + " ans : " + data.total_potentiel + " € cumulés");
+  line("Confort mensuel présenté : " + data.confort_mensuel + " €/mois");
+
+  return doc.output("datauristring").split(",")[1]; // base64 seul, sans le préfixe data:...
+}
+
+function envoyerPdfInterneSilencieux(answers, data, contact){
+  try{
+    const answersAvecContact = Object.assign({}, answers, {
+      __contact_name: contact.name, __contact_email: contact.email, __contact_phone: contact.phone,
+    });
+    const pdfBase64 = buildInternalPdfBase64(answersAvecContact, data);
+    fetch("/api/notify-cgp", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        contact,
+        pdf_base64: pdfBase64,
+        filename: "recap-" + (contact.name||"prospect").replace(/[^a-z0-9]/gi,"_") + ".pdf",
+      }),
+    }).catch(()=>{ /* échec silencieux : la clé Resend n'est peut-être pas encore configurée */ });
+  } catch(e){
+    // La génération du PDF ou l'appel réseau a échoué : ne jamais bloquer le
+    // parcours du prospect pour ça, on ignore silencieusement.
+    console.warn("Envoi PDF interne CGP : échec silencieux", e);
+  }
 }
 
 function renderResultCard(){
@@ -1362,8 +1625,8 @@ function renderResult(card, data){
     monthly.style.padding = "16px 22px";
     monthly.style.display = "flex"; monthly.style.justifyContent = "space-between"; monthly.style.alignItems="center"; monthly.style.gap="12px"; monthly.style.flexWrap="wrap";
     const left = el("div");
-    left.appendChild(el("div","field-label","Confort mensuel supplémentaire possible"));
-    left.appendChild(el("div","field-sub","Capital retraite lissé sur 20 ans + loyers potentiels de la solution immobilière."));
+    left.appendChild(el("div","field-label","Revenus complémentaires à la retraite estimés"));
+    left.appendChild(el("div","field-sub","Capital retraite lissé, loyers potentiels et/ou revenu complémentaire de retraite estimé, selon votre situation."));
     left.style.margin = "0";
     monthly.appendChild(left);
     const val = el("div","", data.confort_mensuel.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") + " €/mois");
@@ -1415,6 +1678,8 @@ reponsesTxt + "\n\n" +
 name.value;
 
     window.location.href = "mailto:" + EMAIL_CGP + "?subject=" + sujet + "&body=" + encodeURIComponent(corps);
+
+    envoyerPdfInterneSilencieux(answers, data, { name: name.value, email: email.value, phone: phone.value });
 
     cta.innerHTML = "";
     cta.appendChild(el("div","field-label","Merci ! ✓"));
