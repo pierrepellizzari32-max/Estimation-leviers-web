@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{
   --cream:#faf6ef; --ink:#1f2a24; --green:#1f4d3d; --green-light:#2e6b53;
@@ -1279,6 +1279,12 @@ function buildTeaserSimulateur(a) {
 // ⚠️ Adresse recevant les demandes de RDV (utilisée dans le lien mailto: ci-dessous)
 const EMAIL_CGP = "pellizzari.p@hotmail.com";
 
+// ⚠️ À remplacer par tes propres identifiants EmailJS (emailjs.com — compte gratuit) :
+const EMAILJS_PUBLIC_KEY = "TON_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID = "TON_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "TON_TEMPLATE_ID";
+if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
 const STEPS = [
   { id:"intro" },
   { id:"age", label:"Quel est votre âge ?", type:"number", unit:"ans", min:18, max:90, default:40 },
@@ -1462,58 +1468,30 @@ function buildRecapTexte(data){
   return { lignesTxt, totalTxt, confortTxt, reponsesTxt };
 }
 
-function buildInternalPdfBase64(answers, data){
+function buildInternalRecapText(answers, data){
   const result = computeRecommendations(answers);
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const marginX = 40;
-  let y = 50;
-  const lineHeight = 16;
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  function ensureSpace(extra){
-    if(y + extra > pageHeight - 40){ doc.addPage(); y = 50; }
-  }
-  function title(txt){
-    ensureSpace(24);
-    doc.setFont("helvetica","bold"); doc.setFontSize(13);
-    doc.text(txt, marginX, y); y += 20;
-    doc.setFont("helvetica","normal"); doc.setFontSize(10);
-  }
-  function line(txt){
-    ensureSpace(lineHeight);
-    const wrapped = doc.splitTextToSize(txt, 515);
-    wrapped.forEach(w=>{ ensureSpace(lineHeight); doc.text(w, marginX, y); y += lineHeight; });
-  }
-
-  doc.setFont("helvetica","bold"); doc.setFontSize(16);
-  doc.text("Récapitulatif interne — usage CGP uniquement", marginX, y); y += 26;
-  doc.setFont("helvetica","normal"); doc.setFontSize(10);
-  line("Généré automatiquement depuis le simulateur — à ne pas transmettre au client.");
-  y += 6;
+  const L = [];
+  const line = (t) => L.push(t);
+  const title = (t) => { L.push(""); L.push("== " + t + " =="); };
 
   title("Coordonnées du prospect");
   line("Nom : " + (answers.__contact_name || ""));
   line("Email : " + (answers.__contact_email || ""));
   line("Téléphone : " + (answers.__contact_phone || ""));
-  y += 6;
 
   title("Réponses au questionnaire");
   visibleSteps.filter(s=>s.id!=="intro"&&s.id!=="result").forEach(s=>{
-    line("• " + s.label.replace(/\s*\?$/,"") + " : " + formatReponseHumaine(s, answers[s.id]));
+    line("- " + s.label.replace(/\s*\?$/,"") + " : " + formatReponseHumaine(s, answers[s.id]));
   });
-  y += 6;
 
   title("Score et priorités détectées");
   line("Score patrimonial : " + result.score + "/100");
   line("Priorités (ordre) : " + result.priorites.map(p=>p.label+" ("+p.intensity+"/10)").join(" · "));
-  y += 6;
 
   title("Solutions retenues par le moteur (noms réels)");
   result.recommandations.forEach(r=>{
-    line("• " + r.label + " — " + r.stars + "/5 étoiles" + (r.etape_suivante ? " (à horizon, base de précaution pas encore sécurisée)" : ""));
+    line("- " + r.label + " — " + r.stars + "/5 étoiles" + (r.etape_suivante ? " (à horizon, base de précaution pas encore sécurisée)" : ""));
   });
-  y += 6;
 
   if(data.patrimoine_en_plus > 0 || data.economie_impots_cumulee > 0){
     const topImmo = result.recommandations.find(r => r.projet && r.projet.montant_projet > 0);
@@ -1529,7 +1507,6 @@ function buildInternalPdfBase64(answers, data){
     }
     line("Économie d'impôts cumulée retenue (teaser) : " + data.economie_impots_cumulee + " €");
     line("Patrimoine en plus retenu (teaser) : " + data.patrimoine_en_plus + " €");
-    y += 6;
   }
 
   if(data.gain_allocation > 0){
@@ -1537,8 +1514,7 @@ function buildInternalPdfBase64(answers, data){
     line("Versement mensuel pris en compte : " + (answers.capacite_epargne||0) + " €/mois");
     line("Hypothèse allocation optimisée : 5 %/an — Hypothèse placement prudent : 2 %/an");
     line("Gain lié à l'allocation (delta 5% vs 2%) : " + data.gain_allocation + " €");
-    line("Revenu complémentaire retraite estimé (dès 64 ans, 3 %/an du capital / 12) : " + data.revenu_retraite_mensuel + " €/mois");
-    y += 6;
+    line("Revenus complémentaires retraite estimés (dès 64 ans, 3 %/an du capital / 12) : " + data.revenu_retraite_mensuel + " €/mois");
   }
 
   if(data.economie_succession > 0){
@@ -1547,35 +1523,30 @@ function buildInternalPdfBase64(answers, data){
     if(result.cap_demembre) line("Capitalisation démembrée — montant excédent : " + result.cap_demembre.montant_excedent + " € / base taxable après abattement : " + result.cap_demembre.base_taxable_apres_abattement + " €");
     if(result.av_droits_economises) line("Optimisation assurance-vie — potentiel restant : " + result.av_droits_economises.potentiel_restant + " €");
     line("Droits de succession économisés (delta avant/après) : " + data.economie_succession + " €");
-    y += 6;
   }
 
   title("Total potentiel présenté au prospect");
   line("Sur " + data.duree_annees + " ans : " + data.total_potentiel + " € cumulés");
-  line("Confort mensuel présenté : " + data.confort_mensuel + " €/mois");
+  line("Revenus complémentaires présentés : " + data.confort_mensuel + " €/mois");
 
-  return doc.output("datauristring").split(",")[1]; // base64 seul, sans le préfixe data:...
+  return L.join("\n");
 }
 
-function envoyerPdfInterneSilencieux(answers, data, contact){
+function envoyerRecapInterneSilencieux(answers, data, contact){
   try{
     const answersAvecContact = Object.assign({}, answers, {
       __contact_name: contact.name, __contact_email: contact.email, __contact_phone: contact.phone,
     });
-    const pdfBase64 = buildInternalPdfBase64(answersAvecContact, data);
-    fetch("/api/notify-cgp", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        contact,
-        pdf_base64: pdfBase64,
-        filename: "recap-" + (contact.name||"prospect").replace(/[^a-z0-9]/gi,"_") + ".pdf",
-      }),
-    }).catch(()=>{ /* échec silencieux : la clé Resend n'est peut-être pas encore configurée */ });
+    const recapText = buildInternalRecapText(answersAvecContact, data);
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      contact_name: contact.name,
+      contact_email: contact.email,
+      contact_phone: contact.phone,
+      recap: recapText,
+    }, EMAILJS_PUBLIC_KEY).catch(()=>{ /* échec silencieux : EmailJS pas encore configuré */ });
   } catch(e){
-    // La génération du PDF ou l'appel réseau a échoué : ne jamais bloquer le
-    // parcours du prospect pour ça, on ignore silencieusement.
-    console.warn("Envoi PDF interne CGP : échec silencieux", e);
+    // Ne jamais bloquer le parcours du prospect pour ça : échec silencieux.
+    console.warn("Envoi récap interne CGP : échec silencieux", e);
   }
 }
 
@@ -1679,7 +1650,7 @@ name.value;
 
     window.location.href = "mailto:" + EMAIL_CGP + "?subject=" + sujet + "&body=" + encodeURIComponent(corps);
 
-    envoyerPdfInterneSilencieux(answers, data, { name: name.value, email: email.value, phone: phone.value });
+    envoyerRecapInterneSilencieux(answers, data, { name: name.value, email: email.value, phone: phone.value });
 
     cta.innerHTML = "";
     cta.appendChild(el("div","field-label","Merci ! ✓"));
