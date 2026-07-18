@@ -712,6 +712,11 @@ function computeVenteImmoLocatifReco(a) {
   const age = parseInt(a.age || 40);
   if (age >= 70) return null;
 
+  // Vente uniquement si le client est explicitement d'accord (question posée
+  // dès qu'il possède plusieurs biens locatifs). S'il n'a qu'un seul bien et
+  // que la question n'a pas été posée, on garde le comportement historique.
+  if (a.pret_a_vendre_locatif !== undefined && a.pret_a_vendre_locatif !== "oui") return null;
+
   let objectifs = a.objectifs_prioritaires || [];
   if (typeof objectifs === "string") objectifs = [objectifs];
   if (!objectifs.includes("transmission")) return null;
@@ -722,10 +727,30 @@ function computeVenteImmoLocatifReco(a) {
   const montantAvActuel = parseFloat(a.montant_av || 0);
   const plafondRestant = Math.max(0.0, plafondAv - montantAvActuel);
 
-  if (plafondRestant < 10000) return null;
-
+  // Capital réinvesti en assurance-vie jusqu'au plafond des 152 500 €/
+  // bénéficiaire ; au-delà, l'excédent est orienté vers un contrat de
+  // capitalisation démembré (donation de la nue-propriété aux enfants).
   const capitalAReinvestir = Math.min(montantLocatif, plafondRestant);
-  const droitsEconomises = round(_calculeDroitsSuccession(capitalAReinvestir / nbBeneficiaires) * nbBeneficiaires);
+  const montantExcedentCapiDemembre = Math.max(0.0, montantLocatif - capitalAReinvestir);
+
+  if (capitalAReinvestir < 10000 && montantExcedentCapiDemembre < 10000) return null;
+
+  const droitsEconomisesAv = round(_calculeDroitsSuccession(capitalAReinvestir / nbBeneficiaires) * nbBeneficiaires);
+
+  let droitsEconomisesDemembre = 0;
+  let baseTaxableDemembreApresAbattement = 0;
+  if (montantExcedentCapiDemembre > 0 && enfants > 0) {
+    const valeurNpPct = valeurNuePropretePct(age);
+    const baseTaxableNp = montantExcedentCapiDemembre * valeurNpPct;
+    const abattementTotalDisponible = ABATTEMENT_DONATION_LIGNE_DIRECTE * enfants;
+    baseTaxableDemembreApresAbattement = Math.max(0.0, baseTaxableNp - abattementTotalDisponible);
+    const baseAvantDemembre = Math.max(0.0, montantExcedentCapiDemembre - abattementTotalDisponible);
+    const droitsAvant = _calculeDroitsSuccession(baseAvantDemembre / nbBeneficiaires) * nbBeneficiaires;
+    const droitsApres = _calculeDroitsSuccession(baseTaxableDemembreApresAbattement / nbBeneficiaires) * nbBeneficiaires;
+    droitsEconomisesDemembre = round(Math.max(0.0, droitsAvant - droitsApres));
+  }
+
+  const droitsEconomises = droitsEconomisesAv + droitsEconomisesDemembre;
   const bf = parseFloat(a.benefices_fonciers || 0);
   const revenuAvEstime = capitalAReinvestir * 0.04;
   const rendementLocatifBrut = montantLocatif > 0 ? bf / montantLocatif : 0;
@@ -733,8 +758,69 @@ function computeVenteImmoLocatifReco(a) {
   return {
     id: "vente_immo_locatif_av", label: "Réorientation immobilier locatif → Assurance-vie", stars: 4,
     montant_locatif: round(montantLocatif), plafond_av_restant: round(plafondRestant),
-    capital_a_reinvestir: round(capitalAReinvestir), droits_economises: droitsEconomises,
+    capital_a_reinvestir: round(capitalAReinvestir),
+    montant_excedent_capi_demembre: round(montantExcedentCapiDemembre),
+    droits_economises_av: droitsEconomisesAv, droits_economises_demembre: droitsEconomisesDemembre,
+    droits_economises: droitsEconomises,
     revenu_av_estime: round(revenuAvEstime), rendement_locatif_brut_pct: Math.round(rendementLocatifBrut * 1000) / 10,
+  };
+}
+
+const AGE_MAX_CCA_SCI = 75;
+const DUREE_CCA_SCI_ANNEES = 20;
+const SEUIL_PATRIMOINE_LOCATIF_CCA = 500000;
+
+function computeCcaSciReco(a) {
+  const detenus = a.produits_detenus || [];
+  if (!detenus.includes("locatif")) return null;
+
+  const nbBiens = parseInt(a.nb_biens_locatifs || 1);
+  if (nbBiens < 2) return null; // logique réservée aux clients avec plusieurs biens
+
+  // Cette piste ne s'applique que si le client ne souhaite PAS vendre.
+  if (a.pret_a_vendre_locatif !== "non") return null;
+
+  const age = parseInt(a.age || 40);
+  if (age > AGE_MAX_CCA_SCI) return null;
+
+  const montantLocatif = parseFloat(a.montant_locatif || 0);
+  // Montage pertinent surtout pour un patrimoine locatif conséquent, et
+  // motivé avant tout par un objectif de transmission (le bénéfice
+  // principal est la sortie de l'assiette successorale taxée au barème).
+  if (montantLocatif < SEUIL_PATRIMOINE_LOCATIF_CCA) return null;
+
+  let objectifs = a.objectifs_prioritaires || [];
+  if (typeof objectifs === "string") objectifs = [objectifs];
+  if (!objectifs.includes("transmission")) return null;
+
+  const loyerNetAnnuel = parseFloat(a.benefices_fonciers || 0);
+  if (loyerNetAnnuel <= 0) return null;
+
+  // Apport des biens en compte courant d'associé (SCI) : la société
+  // rembourse le prospect avec les loyers nets des biens apportés, sur
+  // DUREE_CCA_SCI_ANNEES ans — ce remboursement n'est pas fiscalisé
+  // (remboursement de capital, pas un revenu).
+  const remboursementCumule = Math.min(montantLocatif, loyerNetAnnuel * DUREE_CCA_SCI_ANNEES);
+  const revenuMensuelNonFiscalise = remboursementCumule / (DUREE_CCA_SCI_ANNEES * 12);
+
+  // Bénéfice succession : si ces remboursements (non fiscalisés) sont
+  // progressivement replacés en assurance-vie, ils sortent de l'assiette
+  // successorale taxée au barème pour profiter de l'abattement AV
+  // (152 500 €/bénéficiaire). Le delta ne porte que sur la fraction
+  // effectivement replaçable dans ce plafond.
+  const enfants = getEnfantsTotal(a);
+  const nbBeneficiaires = Math.max(1, enfants);
+  const montantAvActuel = parseFloat(a.montant_av || 0);
+  const plafondAvRestant = Math.max(0.0, ABATTEMENT_AV_DECES_PAR_BENEFICIAIRE * nbBeneficiaires - montantAvActuel);
+  const montantRedirigeVersAv = Math.min(remboursementCumule, plafondAvRestant);
+  const droitsEconomises = round(_calculeDroitsSuccession(montantRedirigeVersAv / nbBeneficiaires) * nbBeneficiaires);
+
+  return {
+    id: "cca_sci_locatif", label: "Apport des biens locatifs en compte courant d'associé (SCI)", stars: 4,
+    montant_cca: round(montantLocatif), loyer_net_annuel: round(loyerNetAnnuel),
+    duree_annees: DUREE_CCA_SCI_ANNEES, remboursement_cumule: round(remboursementCumule),
+    revenu_mensuel_non_fiscalise: round(revenuMensuelNonFiscalise),
+    montant_redirige_vers_av: round(montantRedirigeVersAv), droits_economises: droitsEconomises,
   };
 }
 
@@ -1000,8 +1086,9 @@ function computeRecommendations(aIn) {
   const capDemembre = computeCapiDemembreReco(a, planEpargne);
   const avLuxembourg = computeAvLuxembourgReco(a);
   const venteLocatif = computeVenteImmoLocatifReco(a);
+  const ccaSci = computeCcaSciReco(a);
 
-  const extras = [demembrement, capDemembre, avLuxembourg, venteLocatif].filter(Boolean);
+  const extras = [demembrement, capDemembre, avLuxembourg, venteLocatif, ccaSci].filter(Boolean);
   let recosTop = recosFinal.slice(0, 10);
   if (extras.length) recosTop = [...recosFinal.slice(0, 10 - extras.length), ...extras];
 
@@ -1076,6 +1163,19 @@ function _economieSuccessionDelta(result, a) {
   const enfants = Math.max(1, getEnfantsTotal(a));
   const abattementTotal = ABATTEMENT_DONATION_LIGNE_DIRECTE * enfants;
 
+  // Si le client a explicitement indiqué s'il veut vendre ou non ses biens
+  // locatifs, cette stratégie porte vraisemblablement sur les MÊMES biens
+  // que le démembrement générique — on lui donne la priorité pour éviter
+  // de compter deux fois (ou de masquer) le même patrimoine.
+  if (a.pret_a_vendre_locatif === "oui") {
+    const venteLocatif = (result.recommandations || []).find(r => r.id === "vente_immo_locatif_av");
+    if (venteLocatif && venteLocatif.droits_economises > 0) return round(venteLocatif.droits_economises);
+  }
+  if (a.pret_a_vendre_locatif === "non") {
+    const ccaSci = (result.recommandations || []).find(r => r.id === "cca_sci_locatif");
+    if (ccaSci && ccaSci.droits_economises > 0) return round(ccaSci.droits_economises);
+  }
+
   const demembrement = result.demembrement;
   if (demembrement) {
     const valeurPleine = demembrement.valeur_bien_indicative || 0;
@@ -1102,6 +1202,11 @@ function _economieSuccessionDelta(result, a) {
   const venteLocatif = (result.recommandations || []).find(r => r.id === "vente_immo_locatif_av");
   if (venteLocatif && venteLocatif.droits_economises > 0) {
     return round(venteLocatif.droits_economises);
+  }
+
+  const ccaSci = (result.recommandations || []).find(r => r.id === "cca_sci_locatif");
+  if (ccaSci && ccaSci.droits_economises > 0) {
+    return round(ccaSci.droits_economises);
   }
 
   const avInfo = result.av_droits_economises;
@@ -1235,15 +1340,23 @@ function buildTeaserSimulateur(a) {
   const avProjection = dureeInfo.type === "placement" ? _projectionAvOptimisee(aResolue, result.plan_affectation_epargne) : null;
   const gainAllocation = avProjection ? avProjection.gain_allocation : 0;
 
-  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession + gainAllocation;
+  // 4bis) Biens locatifs multiples restructurés (apport en compte courant
+  //       d'associé) : revenu régulier non fiscalisé sur 20 ans, si le
+  //       client ne souhaite pas vendre.
+  const ccaSciReco = (result.recommandations || []).find(r => r.id === "cca_sci_locatif");
+  const revenuCcaCumule = ccaSciReco ? ccaSciReco.remboursement_cumule : 0;
+  const revenuCcaMensuel = ccaSciReco ? ccaSciReco.revenu_mensuel_non_fiscalise : 0;
+
+  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession + gainAllocation + revenuCcaCumule;
 
   // 5) Confort mensuel : capital PER lissé sur 240 mois (20 ans) + loyer net
   //    de la solution immobilière + revenu complémentaire de retraite estimé
-  //    à partir de 64 ans (3 %/an du capital constitué, divisé par 12).
+  //    à partir de 64 ans (3 %/an du capital constitué, divisé par 12) +
+  //    revenu non fiscalisé issu de la restructuration des biens locatifs.
   const versementPerAnnuel = _versementPerAnnuel(aResolue);
   const capitalPerLisseMensuel = round((versementPerAnnuel * 20) / 240);
   const revenuRetraiteMensuel = avProjection ? avProjection.revenu_mensuel_retraite : 0;
-  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel + revenuRetraiteMensuel);
+  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel + revenuRetraiteMensuel + revenuCcaMensuel);
 
   const fmt = (n) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ");
 
@@ -1252,6 +1365,7 @@ function buildTeaserSimulateur(a) {
   ];
   if (patrimoineEnPlus > 0) lignes.push({ label: "Patrimoine en plus (déduction faite de la réduction d'impôts)", montant: patrimoineEnPlus });
   if (gainAllocation > 0) lignes.push({ label: "Gain grâce à une allocation optimisée (vs. placement prudent)", montant: gainAllocation });
+  if (revenuCcaCumule > 0) lignes.push({ label: "Revenus complémentaires libérés sans fiscalité supplémentaire (sur 20 ans)", montant: revenuCcaCumule });
   if (economieSuccession > 0) lignes.push({ label: "Droits de succession en moins", montant: economieSuccession });
 
   const message = `Sur la base des informations saisies, un potentiel total de l'ordre de ${fmt(totalPotentiel)} € a été identifié sur ${dureeAnnees} ans, tous leviers cumulés.`;
@@ -1265,6 +1379,8 @@ function buildTeaserSimulateur(a) {
     total_potentiel: round(totalPotentiel),
     confort_mensuel: confortMensuel,
     revenu_retraite_mensuel: revenuRetraiteMensuel,
+    revenu_cca_cumule: revenuCcaCumule,
+    revenu_cca_mensuel: revenuCcaMensuel,
     participation_mensuelle: participationMensuelle,
     lignes,
     message,
@@ -1280,9 +1396,9 @@ function buildTeaserSimulateur(a) {
 const EMAIL_CGP = "pellizzari.p@hotmail.com";
 
 // ⚠️ À remplacer par tes propres identifiants EmailJS (emailjs.com — compte gratuit) :
-const EMAILJS_PUBLIC_KEY = "TON_PUBLIC_KEY";
-const EMAILJS_SERVICE_ID = "TON_SERVICE_ID";
-const EMAILJS_TEMPLATE_ID = "TON_TEMPLATE_ID";
+const EMAILJS_PUBLIC_KEY = "7u_l5kjUtFZkeLDwo";
+const EMAILJS_SERVICE_ID = "service_7evtnoo";
+const EMAILJS_TEMPLATE_ID = "template_klvjoxb";
 if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
 const STEPS = [
@@ -1326,8 +1442,14 @@ const STEPS = [
     options:[["av","Assurance-vie"],["per","PER"],["pea","PEA"],["scpi","SCPI"],["cto","Compte-titres"],["locatif","Immobilier locatif"],["aucun","Aucun"]] },
   { id:"montant_av", label:"Montant actuel sur votre/vos assurance-vie ?", type:"number", unit:"€", min:0, max:5000000, step:1000, default:0,
     condition:(a)=> (a.produits_detenus||[]).includes("av") },
-  { id:"montant_locatif", label:"Valeur estimée de votre bien locatif ?", type:"number", unit:"€", min:0, max:5000000, step:5000, default:150000,
+  { id:"montant_locatif", label:"Valeur totale estimée de vos biens locatifs ?", type:"number", unit:"€", min:0, max:5000000, step:5000, default:150000,
     condition:(a)=> (a.produits_detenus||[]).includes("locatif") },
+  { id:"nb_biens_locatifs", label:"Combien de biens locatifs possédez-vous au total ?", type:"number", unit:"bien(s)", min:1, max:20, default:1,
+    condition:(a)=> (a.produits_detenus||[]).includes("locatif") },
+  { id:"pret_a_vendre_locatif", label:"Seriez-vous prêt(e) à vendre ces biens locatifs ?",
+    sub:"Cela oriente le type de solution que nous étudierons pour vous.",
+    type:"single", options:[["oui","Oui, j'y suis ouvert(e)"],["non","Non, je préfère les conserver"],["peut_etre","Je ne sais pas encore"]],
+    condition:(a)=> (a.produits_detenus||[]).includes("locatif") && parseInt(a.nb_biens_locatifs||1) >= 2 },
   { id:"result" },
 ];
 
