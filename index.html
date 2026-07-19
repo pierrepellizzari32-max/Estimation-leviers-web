@@ -116,6 +116,8 @@ const DUREE_CREDIT_ANNEES = 25;
 const TAUX_ENDETTEMENT_MAX = 0.35;
 const PONDERATION_REVENUS_LOCATIFS = 0.70;
 const RENDEMENT_LOCATIF_ESTIME = 0.04;
+const RENDEMENT_LOCATIF_MALRAUX_MH = 0.025; // biens de prestige/centre historique : rendement locatif plus faible
+const BONUS_RENDEMENT_MEUBLE = 0.01; // +1 point de rendement au passage en location meublée (LMNP) après l'engagement
 const RATIO_TRAVAUX_DEFISCALISABLE = 0.80;
 const SEUIL_MARCHE_MALRAUX_MH = 130000;
 const TAUX_FRAIS_NOTAIRE_ANCIEN = 0.08;
@@ -196,11 +198,16 @@ function computeIfi(patrimoineImmoNet) {
 function resolveFiscalite(aIn) {
   const a = Object.assign({}, aIn);
   const rev = parseFloat(a.revenu_annuel || 0);
+  const bf = parseFloat(a.benefices_fonciers || 0);
+  // Les bénéfices fonciers s'ajoutent au revenu global imposable (barème
+  // IR) — jusqu'ici absent du calcul (dans server.py comme dans ce
+  // portage), corrigé ici.
+  const revImposable = rev + bf;
   const situation = a.situation_familiale || "celibataire";
   const enfants = parseInt(a.enfants || 0);
   const parts = computePartsFiscales(situation, enfants);
   const partsBase = (situation === "marie" || situation === "pacse") ? 2.0 : 1.0;
-  const calc = computeIrTmi(rev, parts, partsBase);
+  const calc = computeIrTmi(revImposable, parts, partsBase);
 
   const tmiFourni = a.tmi;
   const irFourni = a.montant_ir;
@@ -311,10 +318,19 @@ function computeProjetImmo(a, capaciteInfo, dispositifId = "lmnp_ancien") {
   const loyerFinal = montantFinal * RENDEMENT_LOCATIF_ESTIME / 12.0;
   const effortFinal = mensualiteFinale - loyerFinal;
 
+  // Dispositifs en location nue avec engagement (Denormandie, Déficit
+  // foncier) : à l'issue de l'engagement, passage possible en location
+  // meublée (+1 pt de rendement). Pour LMNP/immo de rendement, déjà meublé
+  // dès l'origine : pas de bonus supplémentaire à ajouter.
+  const dejaMeuble = dispositifId === "lmnp_ancien" || dispositifId === "lmnp_neuf" ||
+    dispositifId === "lmnp_para_hotelier" || dispositifId === "immo_rendement_ancien" || dispositifId === "immo_rendement_neuf";
+  const loyerMeubleFinal = dejaMeuble ? loyerFinal : montantFinal * (RENDEMENT_LOCATIF_ESTIME + BONUS_RENDEMENT_MEUBLE) / 12.0;
+
   return {
     montant_projet: round(montantFinal), montant_emprunte: round(montantEmprunteFinal),
     frais_notaire: round(montantFinal * tauxFrais), taux_frais_notaire: tauxFrais,
     mensualite_credit: round(mensualiteFinale), loyer_estime_mensuel: round(loyerFinal),
+    loyer_estime_mensuel_meuble: round(loyerMeubleFinal),
     effort_net_mensuel: round(effortFinal),
     montant_eligible_travaux_80pct: round(montantFinal * RATIO_TRAVAUX_DEFISCALISABLE),
     ajuste,
@@ -370,7 +386,7 @@ function computeProjetMalrauxMh(a, capaciteInfo, dispositifId = "malraux") {
   function participationPour(m) {
     const montantEmprunte = m * (1 + tauxFrais);
     const mensualite = annuiteMensuelle(montantEmprunte);
-    const loyer = m * RENDEMENT_LOCATIF_ESTIME / 12.0;
+    const loyer = m * RENDEMENT_LOCATIF_MALRAUX_MH / 12.0;
     const eco = economieFiscaleAnnuelle(m);
     return _participationMensuelle(mensualite, loyer, eco, dispositifId);
   }
@@ -397,9 +413,18 @@ function computeProjetMalrauxMh(a, capaciteInfo, dispositifId = "malraux") {
 
   const montantEmprunteFinal = montantFinal * (1 + tauxFrais);
   const mensualiteFinale = annuiteMensuelle(montantEmprunteFinal);
-  const loyerFinal = montantFinal * RENDEMENT_LOCATIF_ESTIME / 12.0;
+  const loyerFinal = montantFinal * RENDEMENT_LOCATIF_MALRAUX_MH / 12.0;
   const ecoFiscaleFinale = economieFiscaleAnnuelle(montantFinal);
   const participationFinale = _participationMensuelle(mensualiteFinale, loyerFinal, ecoFiscaleFinale, dispositifId);
+
+  // Après l'engagement (fin de la période sur laquelle l'avantage fiscal a
+  // été lissé), passage en location meublée : rendement +1 pt, mais plus
+  // aucun crédit d'impôt à déduire — la participation réelle remonte donc
+  // nettement. Donnée réservée à l'usage interne (validation avant RDV),
+  // jamais affichée telle quelle au prospect.
+  const engagementMin = (DUREE_DISPOSITIF_FISCAL[dispositifId] || {}).engagement || 0;
+  const loyerMeubleFinal = montantFinal * (RENDEMENT_LOCATIF_MALRAUX_MH + BONUS_RENDEMENT_MEUBLE) / 12.0;
+  const participationApresEngagement = round(Math.max(0, mensualiteFinale - loyerMeubleFinal));
 
   return {
     montant_projet: round(montantFinal), montant_emprunte: round(montantEmprunteFinal),
@@ -408,6 +433,9 @@ function computeProjetMalrauxMh(a, capaciteInfo, dispositifId = "malraux") {
     effort_net_mensuel: round(mensualiteFinale - loyerFinal),
     participation_mensuelle: round(Math.max(0, participationFinale)),
     economie_fiscale_annuelle: round(ecoFiscaleFinale),
+    loyer_estime_mensuel_meuble: round(loyerMeubleFinal),
+    participation_apres_engagement: participationApresEngagement,
+    fin_engagement_annees: engagementMin,
     montant_eligible_travaux_80pct: round(montantFinal * RATIO_TRAVAUX_DEFISCALISABLE),
     enveloppe_travaux: round(enveloppeTravaux), ir_annuel: round(ir),
     plafonne_par_capacite_emprunt: montantPiloteParIr > montantMaxAvantFrais,
@@ -770,6 +798,66 @@ const AGE_MAX_CCA_SCI = 75;
 const DUREE_CCA_SCI_ANNEES = 20;
 const SEUIL_PATRIMOINE_LOCATIF_CCA = 500000;
 
+const RESERVE_LIQUIDITE_ACHAT_CASH = 70000;
+const SEUIL_MIN_ACHAT_CASH = 50000;
+
+function computeCashPlusLevierReco(a) {
+  const patFin = parseFloat(a.patrimoine_financier || 0);
+  const montantCash = patFin - RESERVE_LIQUIDITE_ACHAT_CASH;
+  if (montantCash < SEUIL_MIN_ACHAT_CASH) return null;
+
+  const loyerCashAnnuel = montantCash * RENDEMENT_LOCATIF_ESTIME;
+  const loyerCashMensuel = loyerCashAnnuel / 12.0;
+
+  // Nouvelle situation fiscale une fois le loyer du bien acheté cash ajouté
+  // aux bénéfices fonciers existants (achat sans crédit : pas de mensualité,
+  // seulement du revenu locatif supplémentaire, imposable).
+  const bfExistant = parseFloat(a.benefices_fonciers || 0);
+  const aAvecLoyerCash = Object.assign({}, a, { benefices_fonciers: bfExistant + loyerCashAnnuel });
+  const aResolueAvecCash = resolveFiscalite(aAvecLoyerCash);
+
+  // La capacité d'emprunt n'est pas entamée par l'achat cash (aucun crédit) :
+  // elle reste donc pleinement disponible pour un second bien à crédit.
+  const capaciteInfo = computeCapaciteEmprunt(aResolueAvecCash);
+  if (!canBorrow(capaciteInfo.capacite_disponible_investissement)) {
+    return {
+      id: "cash_immo_seul", label: "Achat immobilier cash (revenus complémentaires immédiats)", stars: 4,
+      montant_cash: round(montantCash), loyer_cash_mensuel: round(loyerCashMensuel),
+      a_bien_credit: false,
+    };
+  }
+
+  // Dispositif le plus pertinent une fois la nouvelle fiscalité prise en
+  // compte (IR augmenté par le loyer du bien cash) — LMNP par défaut si
+  // aucun besoin fiscal particulier ne ressort.
+  const immoRecos2 = immoRecommendations(aResolueAvecCash);
+  const dispositifId = immoRecos2.length ? immoRecos2[0].id : "lmnp_ancien";
+
+  const projet2 = (dispositifId === "malraux" || dispositifId === "monuments_historiques")
+    ? computeProjetMalrauxMh(aResolueAvecCash, capaciteInfo, dispositifId)
+    : computeProjetImmo(aResolueAvecCash, capaciteInfo, dispositifId);
+
+  const participationBrute = projet2.participation_mensuelle !== undefined
+    ? projet2.participation_mensuelle : Math.max(0, projet2.effort_net_mensuel || 0);
+  const participationNette = Math.max(0, participationBrute - loyerCashMensuel);
+
+  // Ce montage rend-il accessible un dispositif qui, sans le cash-flow du
+  // bien acheté cash, aurait dépassé la capacité d'épargne du client ?
+  const capaciteEpargneClient = parseFloat(a.capacite_epargne || 0);
+  const rendAccessible = participationBrute > capaciteEpargneClient && participationNette <= capaciteEpargneClient;
+
+  return {
+    id: "cash_plus_levier", label: "Achat immobilier cash + dispositif à crédit financé par les loyers", stars: 5,
+    montant_cash: round(montantCash), loyer_cash_mensuel: round(loyerCashMensuel),
+    a_bien_credit: true, dispositif_credit_id: dispositifId,
+    montant_projet_credit: projet2.montant_projet || 0,
+    economie_fiscale_annuelle_credit: projet2.economie_fiscale_annuelle || 0,
+    participation_brute_credit: round(participationBrute),
+    participation_nette_apres_loyers_cash: round(participationNette),
+    rend_accessible: rendAccessible,
+  };
+}
+
 function computeCcaSciReco(a) {
   const detenus = a.produits_detenus || [];
   if (!detenus.includes("locatif")) return null;
@@ -1087,8 +1175,9 @@ function computeRecommendations(aIn) {
   const avLuxembourg = computeAvLuxembourgReco(a);
   const venteLocatif = computeVenteImmoLocatifReco(a);
   const ccaSci = computeCcaSciReco(a);
+  const cashPlusLevier = computeCashPlusLevierReco(a);
 
-  const extras = [demembrement, capDemembre, avLuxembourg, venteLocatif, ccaSci].filter(Boolean);
+  const extras = [demembrement, capDemembre, avLuxembourg, venteLocatif, ccaSci, cashPlusLevier].filter(Boolean);
   let recosTop = recosFinal.slice(0, 10);
   if (extras.length) recosTop = [...recosFinal.slice(0, 10 - extras.length), ...extras];
 
@@ -1122,19 +1211,27 @@ const _LABEL_SOURCE_TO_ID = {
   "Monuments Historiques": "monuments_historiques", "Déficit foncier": "deficit_foncier",
 };
 
+function _idsReellementRecommandes(result) {
+  // Un dispositif immobilier rétrogradé (base de précaution non sécurisée,
+  // etape_suivante=true) reste visible dans la liste à titre indicatif,
+  // mais ne doit ni chiffrer l'économie d'impôt ni piloter la durée
+  // affichée au prospect — on ne "parle" pas encore de ce produit tant que
+  // la base n'est pas sécurisée.
+  return new Set((result.recommandations || []).filter(r => !r.etape_suivante).map(r => r.id));
+}
+
 function _dureeEtType(result, age) {
   const recos = result.recommandations || [];
+  const idsUtilisables = _idsReellementRecommandes(result);
   const horizonRetraite = Math.max(0, AGE_RETRAITE_PROJECTION - parseInt(age || 40));
   // recos est déjà trié par étoiles décroissantes : on cherche le premier
   // dispositif immobilier présent, même s'il n'est pas le tout premier de
-  // la liste (ex : PER/Assurance-vie mieux notés en attendant que la base
-  // de précaution soit sécurisée), pour rester cohérent avec l'économie
-  // d'impôt qui, elle, compte déjà ce dispositif. On exclut cependant tout
-  // dispositif dont l'engagement déborderait sur la retraite du client :
-  // dans ce cas ce n'est plus une piste réaliste, on bascule sur la
-  // logique "placement" (assurance-vie).
+  // la liste (ex : PER/Assurance-vie mieux notés), pour rester cohérent
+  // avec l'économie d'impôt qui, elle, compte déjà ce dispositif. On exclut
+  // tout dispositif dont l'engagement déborderait sur la retraite du
+  // client, ainsi que tout dispositif encore rétrogradé en "étape suivante".
   const immoPresent = recos.find(r =>
-    DUREE_ENGAGEMENT_ANNEES[r.id] !== undefined && DUREE_ENGAGEMENT_ANNEES[r.id] <= horizonRetraite
+    DUREE_ENGAGEMENT_ANNEES[r.id] !== undefined && DUREE_ENGAGEMENT_ANNEES[r.id] <= horizonRetraite && idsUtilisables.has(r.id)
   );
   if (immoPresent) {
     return { duree_annees: DUREE_ENGAGEMENT_ANNEES[immoPresent.id], type: "immobilier", top_id: immoPresent.id };
@@ -1143,7 +1240,7 @@ function _dureeEtType(result, age) {
 }
 
 function _economieAnnuelleCoherente(result, a) {
-  const idsRecommandes = new Set((result.recommandations || []).map(r => r.id));
+  const idsRecommandes = _idsReellementRecommandes(result);
   const sources = (result.tax_savings || {}).sources || [];
   let total = 0;
   for (const src of sources) {
@@ -1218,7 +1315,7 @@ function _economieSuccessionDelta(result, a) {
 }
 
 function _economieImmoAnnuelleCoherente(result, economieAnnuelleTotal) {
-  const idsRecommandes = new Set((result.recommandations || []).map(r => r.id));
+  const idsRecommandes = _idsReellementRecommandes(result);
   const sources = (result.tax_savings || {}).sources || [];
   let totalImmo = 0;
   for (const src of sources) {
@@ -1294,7 +1391,10 @@ function _montantProjetEtLoyer(a, result, dureeInfo) {
     : computeProjetImmo(a, capaciteInfo, topId || "lmnp_ancien");
   return {
     montant_projet: projet.montant_projet || 0,
-    loyer_mensuel: projet.loyer_estime_mensuel || 0,
+    // Loyer "steady state" (après passage en meublé une fois l'engagement
+    // terminé) : plus représentatif du confort mensuel sur la durée totale
+    // de détention que le loyer nu initial.
+    loyer_mensuel: projet.loyer_estime_mensuel_meuble || projet.loyer_estime_mensuel || 0,
     participation_mensuelle: projet.participation_mensuelle || 0,
   };
 }
@@ -1347,16 +1447,27 @@ function buildTeaserSimulateur(a) {
   const revenuCcaCumule = ccaSciReco ? ccaSciReco.remboursement_cumule : 0;
   const revenuCcaMensuel = ccaSciReco ? ccaSciReco.revenu_mensuel_non_fiscalise : 0;
 
-  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession + gainAllocation + revenuCcaCumule;
+  // 4ter) Capital dormant important : achat immobilier cash générant des
+  //       revenus complémentaires immédiats. On ne compte ici QUE le bien
+  //       acheté cash lui-même (toujours nouveau, jamais compté ailleurs) —
+  //       le dispositif à crédit que ce montage peut aussi débloquer grâce
+  //       au supplément d'IR est le même type de bien que celui déjà compté
+  //       dans "Patrimoine en plus" : on évite de le compter deux fois.
+  const cashLevierReco = (result.recommandations || []).find(r => r.id === "cash_plus_levier" || r.id === "cash_immo_seul");
+  const patrimoineCashLevier = cashLevierReco ? (cashLevierReco.montant_cash || 0) : 0;
+  const loyerCashLevierMensuel = cashLevierReco ? (cashLevierReco.loyer_cash_mensuel || 0) : 0;
+
+  const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession + gainAllocation + revenuCcaCumule + patrimoineCashLevier;
 
   // 5) Confort mensuel : capital PER lissé sur 240 mois (20 ans) + loyer net
   //    de la solution immobilière + revenu complémentaire de retraite estimé
   //    à partir de 64 ans (3 %/an du capital constitué, divisé par 12) +
-  //    revenu non fiscalisé issu de la restructuration des biens locatifs.
+  //    revenu non fiscalisé issu de la restructuration des biens locatifs +
+  //    loyers du bien acheté cash.
   const versementPerAnnuel = _versementPerAnnuel(aResolue);
   const capitalPerLisseMensuel = round((versementPerAnnuel * 20) / 240);
   const revenuRetraiteMensuel = avProjection ? avProjection.revenu_mensuel_retraite : 0;
-  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel + revenuRetraiteMensuel + revenuCcaMensuel);
+  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel + revenuRetraiteMensuel + revenuCcaMensuel + loyerCashLevierMensuel);
 
   const fmt = (n) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ");
 
@@ -1366,6 +1477,7 @@ function buildTeaserSimulateur(a) {
   if (patrimoineEnPlus > 0) lignes.push({ label: "Patrimoine en plus (déduction faite de la réduction d'impôts)", montant: patrimoineEnPlus });
   if (gainAllocation > 0) lignes.push({ label: "Gain grâce à une allocation optimisée (vs. placement prudent)", montant: gainAllocation });
   if (revenuCcaCumule > 0) lignes.push({ label: "Revenus complémentaires libérés sans fiscalité supplémentaire (sur 20 ans)", montant: revenuCcaCumule });
+  if (patrimoineCashLevier > 0) lignes.push({ label: "Patrimoine constitué via un achat immobilier cash (liquidités disponibles)", montant: patrimoineCashLevier });
   if (economieSuccession > 0) lignes.push({ label: "Droits de succession en moins", montant: economieSuccession });
 
   const message = `Sur la base des informations saisies, un potentiel total de l'ordre de ${fmt(totalPotentiel)} € a été identifié sur ${dureeAnnees} ans, tous leviers cumulés.`;
@@ -1382,6 +1494,8 @@ function buildTeaserSimulateur(a) {
     revenu_cca_cumule: revenuCcaCumule,
     revenu_cca_mensuel: revenuCcaMensuel,
     participation_mensuelle: participationMensuelle,
+    patrimoine_cash_levier: patrimoineCashLevier,
+    loyer_cash_levier_mensuel: loyerCashLevierMensuel,
     lignes,
     message,
     mention_legale: "Ces estimations sont fournies à titre indicatif sur la base des informations saisies et ne constituent pas une garantie de résultat. Le confort mensuel indiqué (capital retraite, loyers, revenu complémentaire) est une projection lissée qui ne prend pas en compte la performance financière future réelle des supports. Un rendez-vous avec un conseiller est nécessaire pour affiner ces montants.",
@@ -1624,7 +1738,8 @@ function buildInternalRecapText(answers, data){
       line("Montant du projet : " + p.montant_projet + " € (emprunté : " + (p.montant_emprunte||0) + " €)");
       line("Mensualité de crédit estimée : " + p.mensualite_credit + " €/mois");
       line("Loyer estimé : " + p.loyer_estime_mensuel + " €/mois");
-      if(p.participation_mensuelle !== undefined) line("Participation nette mensuelle (mensualité - loyer - économie fiscale lissée) : " + p.participation_mensuelle + " €/mois");
+      if(p.participation_mensuelle !== undefined) line("Participation nette mensuelle pendant l'engagement (lissée) : " + p.participation_mensuelle + " €/mois");
+      if(p.participation_apres_engagement !== undefined) line("⚠ Participation après la fin de l'engagement (" + p.fin_engagement_annees + " ans, plus de crédit d'impôt) : " + p.participation_apres_engagement + " €/mois");
       if(p.economie_fiscale_annuelle !== undefined) line("Économie fiscale annuelle (dispositif) : " + p.economie_fiscale_annuelle + " €/an");
     }
     line("Économie d'impôts cumulée retenue (teaser) : " + data.economie_impots_cumulee + " €");
@@ -1637,6 +1752,22 @@ function buildInternalRecapText(answers, data){
     line("Hypothèse allocation optimisée : 5 %/an — Hypothèse placement prudent : 2 %/an");
     line("Gain lié à l'allocation (delta 5% vs 2%) : " + data.gain_allocation + " €");
     line("Revenus complémentaires retraite estimés (dès 64 ans, 3 %/an du capital / 12) : " + data.revenu_retraite_mensuel + " €/mois");
+  }
+
+  if(data.patrimoine_cash_levier > 0){
+    title("Détail du calcul — achat immobilier cash + effet de levier");
+    const cashReco = result.recommandations.find(r => r.id === "cash_plus_levier" || r.id === "cash_immo_seul");
+    if(cashReco){
+      line("Montant disponible pour achat cash (patrimoine financier - 70 000 € de réserve) : " + cashReco.montant_cash + " €");
+      line("Loyer généré (sans crédit) : " + cashReco.loyer_cash_mensuel + " €/mois");
+      if(cashReco.a_bien_credit){
+        line("Ce loyer supplémentaire augmente l'IR du client, ce qui peut justifier/agrandir un dispositif à crédit (capacité d'emprunt intacte, non utilisée par l'achat cash) : " + (cashReco.dispositif_credit_id||"") + ", montant possible : " + cashReco.montant_projet_credit + " €");
+        line("Participation de ce second bien avant compensation : " + cashReco.participation_brute_credit + " €/mois — après compensation par le loyer du bien cash : " + cashReco.participation_nette_apres_loyers_cash + " €/mois");
+        line("⚠ Ce second bien à crédit peut être le MÊME dispositif que celui déjà compté dans 'Patrimoine en plus' ci-dessus (calculé avec l'IR de base) — à vérifier en RDV s'il s'agit d'un seul bien plus gros ou de deux biens distincts, pour ne pas compter deux fois.");
+      } else {
+        line("Pas de capacité d'emprunt suffisante pour un second bien à crédit en parallèle : achat cash seul.");
+      }
+    }
   }
 
   if(data.economie_succession > 0){
