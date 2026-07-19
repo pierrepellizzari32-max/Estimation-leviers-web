@@ -116,6 +116,7 @@ const DUREE_CREDIT_ANNEES = 25;
 const TAUX_ENDETTEMENT_MAX = 0.35;
 const PONDERATION_REVENUS_LOCATIFS = 0.70;
 const RENDEMENT_LOCATIF_ESTIME = 0.04;
+const TAUX_APPRECIATION_IMMO_ANNUEL = 0.02; // valorisation des biens et des loyers dans le temps
 const RENDEMENT_LOCATIF_MALRAUX_MH = 0.025; // biens de prestige/centre historique : rendement locatif plus faible
 const BONUS_RENDEMENT_MEUBLE = 0.01; // +1 point de rendement au passage en location meublée (LMNP) après l'engagement
 const RATIO_TRAVAUX_DEFISCALISABLE = 0.80;
@@ -137,6 +138,9 @@ const SEUIL_AV_LUXEMBOURG = 100000;
 const SEUIL_AV_LUXEMBOURG_PREMIUM = 1000000;
 
 function round(x) { return Math.round(x); }
+function _valeurRevalorisee(montant, nbAnnees) {
+  return montant * Math.pow(1 + TAUX_APPRECIATION_IMMO_ANNUEL, Math.max(0, nbAnnees));
+}
 function getEnfantsTotal(a) {
   return parseInt((a.enfants_total !== undefined && a.enfants_total !== null) ? a.enfants_total : (a.enfants || 0));
 }
@@ -813,7 +817,17 @@ function computeCashPlusLevierReco(a) {
   // aux bénéfices fonciers existants (achat sans crédit : pas de mensualité,
   // seulement du revenu locatif supplémentaire, imposable).
   const bfExistant = parseFloat(a.benefices_fonciers || 0);
-  const aAvecLoyerCash = Object.assign({}, a, { benefices_fonciers: bfExistant + loyerCashAnnuel });
+  const capaciteEpargneClient = parseFloat(a.capacite_epargne || 0);
+
+  // Le loyer du bien cash devient une capacité d'épargne "virtuelle" pour
+  // dimensionner le second bien : un client sans épargne mensuelle mais
+  // avec des liquidités importantes retrouve ainsi accès à un dispositif
+  // immobilier à crédit — le loyer cash finance sa Participation.
+  const capaciteEpargneEffective = capaciteEpargneClient + loyerCashMensuel;
+  const aAvecLoyerCash = Object.assign({}, a, {
+    benefices_fonciers: bfExistant + loyerCashAnnuel,
+    capacite_epargne: capaciteEpargneEffective,
+  });
   const aResolueAvecCash = resolveFiscalite(aAvecLoyerCash);
 
   // La capacité d'emprunt n'est pas entamée par l'achat cash (aucun crédit) :
@@ -839,12 +853,14 @@ function computeCashPlusLevierReco(a) {
 
   const participationBrute = projet2.participation_mensuelle !== undefined
     ? projet2.participation_mensuelle : Math.max(0, projet2.effort_net_mensuel || 0);
+  // Participation réellement à la charge du client, une fois compensée par
+  // le loyer du bien cash (qui a servi à dimensionner ce second bien) :
+  // proche de sa capacité d'épargne réelle d'origine, potentiellement 0.
   const participationNette = Math.max(0, participationBrute - loyerCashMensuel);
 
-  // Ce montage rend-il accessible un dispositif qui, sans le cash-flow du
-  // bien acheté cash, aurait dépassé la capacité d'épargne du client ?
-  const capaciteEpargneClient = parseFloat(a.capacite_epargne || 0);
-  const rendAccessible = participationBrute > capaciteEpargneClient && participationNette <= capaciteEpargneClient;
+  // Ce montage a-t-il rouvert l'accès à un dispositif à crédit qui n'aurait
+  // pas été possible avec la seule capacité d'épargne réelle du client ?
+  const rendAccessible = capaciteEpargneClient < 100 && capaciteEpargneEffective >= 100;
 
   return {
     id: "cash_plus_levier", label: "Achat immobilier cash + dispositif à crédit financé par les loyers", stars: 5,
@@ -1426,9 +1442,12 @@ function buildTeaserSimulateur(a) {
   const economieImpotsCumulee = round(economieImmoAnnuelle * dureeEtalementImmo + economieAutreAnnuelle * Math.min(dureeAnnees, horizonRetraite));
 
   // 2) Patrimoine en plus (immobilier), net de la part immo déjà comptée en économie d'impôt
+  //    La valeur du bien est revalorisée à 2 %/an sur la durée de détention.
   const { montant_projet: montantProjet, loyer_mensuel: loyerMensuel, participation_mensuelle: participationMensuelle } = _montantProjetEtLoyer(aResolue, result, dureeInfo);
+  const montantProjetRevalorise = _valeurRevalorisee(montantProjet, dureeAnnees);
+  const loyerMensuelRevalorise = _valeurRevalorisee(loyerMensuel, dureeAnnees);
   const patrimoineEnPlus = dureeInfo.type === "immobilier"
-    ? round(Math.max(0, montantProjet - economieImmoAnnuelle * dureeEtalementImmo))
+    ? round(Math.max(0, montantProjetRevalorise - economieImmoAnnuelle * dureeEtalementImmo))
     : 0;
 
   // 3) Droits de succession en moins (delta avant/après optimisation)
@@ -1448,26 +1467,34 @@ function buildTeaserSimulateur(a) {
   const revenuCcaMensuel = ccaSciReco ? ccaSciReco.revenu_mensuel_non_fiscalise : 0;
 
   // 4ter) Capital dormant important : achat immobilier cash générant des
-  //       revenus complémentaires immédiats. On ne compte ici QUE le bien
-  //       acheté cash lui-même (toujours nouveau, jamais compté ailleurs) —
-  //       le dispositif à crédit que ce montage peut aussi débloquer grâce
-  //       au supplément d'IR est le même type de bien que celui déjà compté
-  //       dans "Patrimoine en plus" : on évite de le compter deux fois.
+  //       revenus complémentaires immédiats, revalorisés à 2 %/an sur 20 ans
+  //       (pas d'engagement fixe pour ce bien). Le loyer de ce bien a servi
+  //       de capacité d'épargne virtuelle pour dimensionner un second bien à
+  //       crédit ; on ne compte ici QUE la part vraiment incrémentale de ce
+  //       second bien (au-delà de ce que "Patrimoine en plus" compte déjà),
+  //       pour ne jamais compter deux fois le même bien.
+  const HORIZON_CASH_ANNEES = 20;
   const cashLevierReco = (result.recommandations || []).find(r => r.id === "cash_plus_levier" || r.id === "cash_immo_seul");
-  const patrimoineCashLevier = cashLevierReco ? (cashLevierReco.montant_cash || 0) : 0;
-  const loyerCashLevierMensuel = cashLevierReco ? (cashLevierReco.loyer_cash_mensuel || 0) : 0;
+  const montantCashRevalorise = cashLevierReco ? _valeurRevalorisee(cashLevierReco.montant_cash || 0, HORIZON_CASH_ANNEES) : 0;
+  const loyerCashLevierMensuelRevalorise = cashLevierReco ? _valeurRevalorisee(cashLevierReco.loyer_cash_mensuel || 0, HORIZON_CASH_ANNEES) : 0;
+  const montantCreditIncremental = (cashLevierReco && cashLevierReco.montant_projet_credit)
+    ? Math.max(0, cashLevierReco.montant_projet_credit - montantProjet)
+    : 0;
+  const montantCreditIncrementalRevalorise = _valeurRevalorisee(montantCreditIncremental, dureeAnnees);
+  const patrimoineCashLevier = round(montantCashRevalorise + montantCreditIncrementalRevalorise);
+  const loyerCashLevierMensuel = round(loyerCashLevierMensuelRevalorise);
 
   const totalPotentiel = economieImpotsCumulee + patrimoineEnPlus + economieSuccession + gainAllocation + revenuCcaCumule + patrimoineCashLevier;
 
   // 5) Confort mensuel : capital PER lissé sur 240 mois (20 ans) + loyer net
-  //    de la solution immobilière + revenu complémentaire de retraite estimé
-  //    à partir de 64 ans (3 %/an du capital constitué, divisé par 12) +
-  //    revenu non fiscalisé issu de la restructuration des biens locatifs +
-  //    loyers du bien acheté cash.
+  //    (revalorisé) de la solution immobilière + revenu complémentaire de
+  //    retraite estimé à partir de 64 ans + revenu non fiscalisé issu de la
+  //    restructuration des biens locatifs + loyers (revalorisés) du bien
+  //    acheté cash.
   const versementPerAnnuel = _versementPerAnnuel(aResolue);
   const capitalPerLisseMensuel = round((versementPerAnnuel * 20) / 240);
   const revenuRetraiteMensuel = avProjection ? avProjection.revenu_mensuel_retraite : 0;
-  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuel + revenuRetraiteMensuel + revenuCcaMensuel + loyerCashLevierMensuel);
+  const confortMensuel = round(capitalPerLisseMensuel + loyerMensuelRevalorise + revenuRetraiteMensuel + revenuCcaMensuel + loyerCashLevierMensuel);
 
   const fmt = (n) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ");
 
@@ -1706,6 +1733,7 @@ function buildRecapTexte(data){
 
 function buildInternalRecapText(answers, data){
   const result = computeRecommendations(answers);
+  const aResolue = resolveFiscalite(answers);
   const L = [];
   const line = (t) => L.push(t);
   const title = (t) => { L.push(""); L.push("== " + t + " =="); };
@@ -1720,13 +1748,32 @@ function buildInternalRecapText(answers, data){
     line("- " + s.label.replace(/\s*\?$/,"") + " : " + formatReponseHumaine(s, answers[s.id]));
   });
 
+  title("Fiscalité de départ (avant toute optimisation)");
+  const fc = aResolue.fiscalite_calculee || {};
+  line("Parts fiscales : " + fc.parts_fiscales + " (revenu par part : " + fc.revenu_par_part + " €)");
+  line("TMI calculée : " + aResolue.tmi + " % — IR calculé : " + aResolue.montant_ir + " €/an");
+  if(result.ifi_calcule && result.ifi_calcule.redevable) line("IFI : redevable, montant estimé " + result.ifi_calcule.montant_ifi + " €/an");
+
+  title("Capacité d'emprunt (calcul détaillé)");
+  const ce = result.capacite_emprunt || {};
+  line("Revenu mensuel (salaires) : " + ce.revenu_mensuel + " €");
+  line("Revenus locatifs pondérés (70%) : " + ce.revenus_locatifs_ponderes + " €");
+  line("Revenu mensuel total pris en compte : " + ce.revenu_mensuel_total + " €");
+  line("Mensualité max (35% d'endettement) : " + ce.mensualite_max_35 + " €");
+  line("Mensualités de crédits existants : " + ce.mensualites_credits + " €");
+  line("Mensualité disponible : " + ce.mensualite_disponible + " €");
+  line("Capacité d'emprunt totale (taux " + (ce.taux_indicatif*100) + "%, " + ce.duree_annees + " ans) : " + ce.capacite_montant + " €");
+  if(ce.budget_residence_principale > 0) line("Dont réservé résidence principale : " + ce.budget_residence_principale + " € (mensualité " + ce.mensualite_residence_principale + " €)");
+  line("Capacité disponible pour investissement : " + ce.capacite_disponible_investissement + " € — Peut emprunter : " + (ce.peut_emprunter ? "oui" : "non"));
+
   title("Score et priorités détectées");
   line("Score patrimonial : " + result.score + "/100");
   line("Priorités (ordre) : " + result.priorites.map(p=>p.label+" ("+p.intensity+"/10)").join(" · "));
 
-  title("Solutions retenues par le moteur (noms réels)");
+  title("Solutions retenues par le moteur (noms réels + raisonnement)");
   result.recommandations.forEach(r=>{
     line("- " + r.label + " — " + r.stars + "/5 étoiles" + (r.etape_suivante ? " (à horizon, base de précaution pas encore sécurisée)" : ""));
+    if(r.rationale) line("  Raison : " + r.rationale);
   });
 
   if(data.patrimoine_en_plus > 0 || data.economie_impots_cumulee > 0){
@@ -1771,16 +1818,46 @@ function buildInternalRecapText(answers, data){
   }
 
   if(data.economie_succession > 0){
-    title("Détail du calcul — volet succession");
-    if(result.demembrement) line("Démembrement — valeur du bien : " + result.demembrement.valeur_bien_indicative + " € / valeur nue-propriété retenue : " + result.demembrement.base_taxable_indicative + " €");
-    if(result.cap_demembre) line("Capitalisation démembrée — montant excédent : " + result.cap_demembre.montant_excedent + " € / base taxable après abattement : " + result.cap_demembre.base_taxable_apres_abattement + " €");
-    if(result.av_droits_economises) line("Optimisation assurance-vie — potentiel restant : " + result.av_droits_economises.potentiel_restant + " €");
-    line("Droits de succession économisés (delta avant/après) : " + data.economie_succession + " €");
+    title("Détail du calcul — volet succession (base avant / après)");
+    if(result.demembrement){
+      const d = result.demembrement;
+      line("Démembrement — valeur du bien en pleine propriété : " + d.valeur_bien_indicative + " €");
+      line("Valeur de la nue-propriété retenue (âge " + answers.age + ", " + Math.round(d.valeur_nue_propriete_pct*100) + "% de la valeur) : " + d.base_taxable_indicative + " €");
+      line("Ratio immobilier dans le patrimoine total : " + d.ratio_immo_patrimoine + " %");
+    }
+    if(result.cap_demembre){
+      const c = result.cap_demembre;
+      line("Capitalisation démembrée — montant excédent (au-delà de l'épargne de précaution + 152 500 €) : " + c.montant_excedent + " €");
+      line("Valeur nue-propriété (" + Math.round(c.valeur_nue_propriete_pct*100) + "%) avant abattement : " + c.base_taxable_avant_abattement + " €");
+      line("Abattement donation disponible (100 000 €/enfant, " + answers.enfants_total + " enfant(s)) : " + c.abattement_total_disponible + " €");
+      line("Base taxable après abattement : " + c.base_taxable_apres_abattement + " €");
+    }
+    const venteLocatif = result.recommandations.find(r=>r.id==="vente_immo_locatif_av");
+    if(venteLocatif){
+      line("Vente immobilier locatif → réinvestissement AV : capital réinvesti " + venteLocatif.capital_a_reinvestir + " € (plafond AV restant : " + venteLocatif.plafond_av_restant + " €)");
+      if(venteLocatif.montant_excedent_capi_demembre > 0) line("Excédent au-delà du plafond AV, orienté vers capitalisation démembrée : " + venteLocatif.montant_excedent_capi_demembre + " € (droits économisés sur cette part : " + venteLocatif.droits_economises_demembre + " €)");
+      line("Droits économisés (part assurance-vie) : " + venteLocatif.droits_economises_av + " €");
+    }
+    const ccaReco = result.recommandations.find(r=>r.id==="cca_sci_locatif");
+    if(ccaReco){
+      line("CCA/SCI — remboursement cumulé sur " + ccaReco.duree_annees + " ans : " + ccaReco.remboursement_cumule + " € (loyer net annuel : " + ccaReco.loyer_net_annuel + " €)");
+      line("Montant redirigé vers assurance-vie (dans la limite du plafond) : " + ccaReco.montant_redirige_vers_av + " €");
+    }
+    if(result.av_droits_economises){
+      const av = result.av_droits_economises;
+      line("Assurance-vie — plafond total (152 500 €/bénéficiaire) : " + av.plafond_av + " € / déjà versé : " + av.av_actuelle + " € / potentiel restant : " + av.potentiel_restant + " €");
+    }
+    line("→ Droits de succession économisés retenus (delta avant/après, teaser) : " + data.economie_succession + " €");
   }
 
-  title("Total potentiel présenté au prospect");
-  line("Sur " + data.duree_annees + " ans : " + data.total_potentiel + " € cumulés");
-  line("Revenus complémentaires présentés : " + data.confort_mensuel + " €/mois");
+  title("Impact mesuré — synthèse avant / après optimisation");
+  line("IR annuel avant optimisation : " + aResolue.montant_ir + " € (TMI " + aResolue.tmi + " %)");
+  line("Économie d'impôts identifiée : " + data.economie_impots_cumulee + " € sur " + data.duree_annees + " ans, soit ~" + Math.round(data.economie_impots_cumulee/Math.max(1,data.duree_annees)) + " €/an en moyenne");
+  if(data.economie_succession > 0) line("Droits de succession : réduction de " + data.economie_succession + " € par rapport à la situation actuelle non optimisée");
+  if(data.patrimoine_en_plus > 0) line("Patrimoine net supplémentaire créé (hors économie d'impôt déjà comptée) : " + data.patrimoine_en_plus + " €");
+  if(data.patrimoine_cash_levier > 0) line("Patrimoine supplémentaire via capital dormant réinvesti : " + data.patrimoine_cash_levier + " €");
+  line("TOTAL POTENTIEL IDENTIFIÉ : " + data.total_potentiel + " € sur " + data.duree_annees + " ans");
+  line("Confort mensuel additionnel estimé : " + data.confort_mensuel + " €/mois");
 
   return L.join("\n");
 }
