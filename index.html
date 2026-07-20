@@ -1504,7 +1504,7 @@ function buildTeaserSimulateur(a) {
   if (patrimoineEnPlus > 0) lignes.push({ label: "Patrimoine en plus (déduction faite de la réduction d'impôts)", montant: patrimoineEnPlus });
   if (gainAllocation > 0) lignes.push({ label: "Gain grâce à une allocation optimisée (vs. placement prudent)", montant: gainAllocation });
   if (revenuCcaCumule > 0) lignes.push({ label: "Revenus complémentaires libérés sans fiscalité supplémentaire (sur 20 ans)", montant: revenuCcaCumule });
-  if (patrimoineCashLevier > 0) lignes.push({ label: "Patrimoine constitué via un achat immobilier cash (liquidités disponibles)", montant: patrimoineCashLevier });
+  if (patrimoineCashLevier > 0) lignes.push({ label: "Patrimoine en plus grâce à l'optimisation de vos liquidités disponibles", montant: patrimoineCashLevier });
   if (economieSuccession > 0) lignes.push({ label: "Droits de succession en moins", montant: economieSuccession });
 
   const message = `Sur la base des informations saisies, un potentiel total de l'ordre de ${fmt(totalPotentiel)} € a été identifié sur ${dureeAnnees} ans, tous leviers cumulés.`;
