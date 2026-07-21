@@ -120,6 +120,7 @@ const TAUX_APPRECIATION_IMMO_ANNUEL = 0.02; // valorisation des biens et des loy
 const RENDEMENT_LOCATIF_MALRAUX_MH = 0.025; // biens de prestige/centre historique : rendement locatif plus faible
 const BONUS_RENDEMENT_MEUBLE = 0.01; // +1 point de rendement au passage en location meublée (LMNP) après l'engagement
 const RATIO_TRAVAUX_DEFISCALISABLE = 0.80;
+const PLAFOND_DENORMANDIE = 300000; // plafond d'assiette de la réduction Denormandie
 const SEUIL_MARCHE_MALRAUX_MH = 130000;
 const TAUX_FRAIS_NOTAIRE_ANCIEN = 0.08;
 const TAUX_FRAIS_NOTAIRE_NEUF = 0.04;
@@ -330,7 +331,7 @@ function computeProjetImmo(a, capaciteInfo, dispositifId = "lmnp_ancien") {
     dispositifId === "lmnp_para_hotelier" || dispositifId === "immo_rendement_ancien" || dispositifId === "immo_rendement_neuf";
   const loyerMeubleFinal = dejaMeuble ? loyerFinal : montantFinal * (RENDEMENT_LOCATIF_ESTIME + BONUS_RENDEMENT_MEUBLE) / 12.0;
 
-  return {
+  const result = {
     montant_projet: round(montantFinal), montant_emprunte: round(montantEmprunteFinal),
     frais_notaire: round(montantFinal * tauxFrais), taux_frais_notaire: tauxFrais,
     mensualite_credit: round(mensualiteFinale), loyer_estime_mensuel: round(loyerFinal),
@@ -339,6 +340,23 @@ function computeProjetImmo(a, capaciteInfo, dispositifId = "lmnp_ancien") {
     montant_eligible_travaux_80pct: round(montantFinal * RATIO_TRAVAUX_DEFISCALISABLE),
     ajuste,
   };
+
+  // Denormandie : réduction d'impôt réelle (12 %/6 ans, 18 %/9 ans, 21 %/12
+  // ans), assiette = prix d'achat + travaux plafonnée à 300 000 €. On retient
+  // l'option 9 ans/18 % par défaut pour le calcul agrégé (gain annuel le plus
+  // élevé) ; les deux options restent disponibles dans denormandie_options.
+  if (dispositifId === "denormandie") {
+    const assietteDenormandie = Math.min(montantFinal, PLAFOND_DENORMANDIE);
+    result.montant_eligible_denormandie = round(assietteDenormandie);
+    result.denormandie_options = [
+      { duree: 9, taux: 0.18, gain_annuel: round(assietteDenormandie * 0.18 / 9) },
+      { duree: 12, taux: 0.21, gain_annuel: round(assietteDenormandie * 0.21 / 12) },
+    ];
+    result.taux_denormandie = 0.18;
+    result.economie_fiscale_annuelle = result.denormandie_options[0].gain_annuel;
+  }
+
+  return result;
 }
 
 // Durée d'étalement fiscal (nb d'années où l'avantage se répète) et durée
@@ -503,16 +521,16 @@ function immoRecommendations(a) {
     return reco("monuments_historiques", 5, `IR ${Math.round(ir)} € et TMI ${tmi} % : Monuments Historiques.`);
   }
 
-  if (ir > 9000 && marcheMalrauxMhDisponible) {
+  if (ir > 6000 && marcheMalrauxMhDisponible) {
     return reco("malraux", 5, `IR ${Math.round(ir)} € : Malraux.`);
   }
 
-  if (ir > 9000 && !marcheMalrauxMhDisponible) {
+  if (ir > 6000 && !marcheMalrauxMhDisponible) {
     if (tmi >= 30) return reco("lmnp_para_hotelier", 4, `IR ${Math.round(ir)} € mais capacité < 130 000 € : LMNP Para-Hôtelier.`);
     return reco("lmnp_ancien", 4, `IR ${Math.round(ir)} € mais capacité < 130 000 € : LMNP Ancien.`);
   }
 
-  if (ir >= 2500 && ir <= 9000) {
+  if (ir >= 2500 && ir <= 6000) {
     return reco("denormandie", 4, `IR ${Math.round(ir)} € : Denormandie.`);
   }
 
@@ -566,11 +584,12 @@ function computeTaxSavings(a) {
 
   // 2) Dispositifs immobiliers — si imposable et capacité d'emprunt
   if (peutEmprunter) {
-    if (ir >= 2500 && ir < 9000) {
-      const eco = Math.min(ir * 0.6, 4000);
+    if (ir >= 2500 && ir < 6000) {
+      const projetDenorm = computeProjetImmo(a, capaciteInfo, "denormandie");
+      const eco = projetDenorm ? projetDenorm.economie_fiscale_annuelle : 0;
       sources.push({ label: "Investissement Denormandie", amount: round(eco) });
       total += eco;
-    } else if (ir >= 9000 && tmi >= 30 && marcheMalrauxMhDisponible) {
+    } else if (ir >= 6000 && tmi >= 30 && marcheMalrauxMhDisponible) {
       const eco = projetMalraux ? projetMalraux.economie_fiscale_annuelle : 0;
       sources.push({ label: "Investissement Malraux", amount: round(eco) });
       total += eco;
@@ -581,8 +600,13 @@ function computeTaxSavings(a) {
       total += eco;
     }
     if (bf > 6000 && tmi >= 30) {
+      // Le déficit foncier n'économise les 17,2 % de prélèvements sociaux
+      // QUE sur la part qui vient compenser un revenu foncier déjà existant
+      // (bf) — au-delà, la part imputée sur le revenu global (plafonnée à
+      // 10 700 €/an) ne fait économiser que le TMI, pas les charges sociales.
       const plafondTravauxAnnuel = montantTravaux80 > 0 ? Math.min(10700, montantTravaux80) : 10700;
-      const eco = (tmi + 17.2) / 100 * plafondTravauxAnnuel;
+      const partAvecChargesSociales = Math.min(bf, plafondTravauxAnnuel);
+      const eco = (tmi / 100) * plafondTravauxAnnuel + (17.2 / 100) * partAvecChargesSociales;
       sources.push({ label: "Déficit foncier", amount: round(eco) });
       total += eco;
     }
